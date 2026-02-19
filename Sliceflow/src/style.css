@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --color-brand: #4391d4;
+  --color-brand-dark: #0f172a;
+}
+
+body {
+  background-color: #f0f4f8; /* Un gris azulado que hace resaltar el blanco */
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mejora el renderizado de las fuentes pesadas */
+h1, h2, h3, p {
+  text-rendering: optimizeLegibility;
+}
