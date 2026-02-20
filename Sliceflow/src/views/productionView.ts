@@ -42,7 +42,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">FDM - Total Generado</span>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Generado por I3D</span>
               <div class="p-2 bg-blue-50 rounded-lg text-blue-500 text-xs">🖨️</div>
             </div>
             <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${(data.revenue_fdm || 0).toLocaleString()}` : "••••••"}</h2>
@@ -67,7 +67,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
 
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
             <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Utilización</span>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capacidad Ociosa</span>
               <div class="p-2 bg-slate-50 rounded-lg text-slate-400 text-xs">📊</div>
             </div>
             <h2 class="text-3xl font-black text-[#0f172a]">${data.utilization_rate}%</h2>

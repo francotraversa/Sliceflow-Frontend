@@ -1,5 +1,5 @@
 // src/api/productionServices.ts
-import type { CreateOrderDTO, ProductionDashboardResponse } from '../types/production';
+import type { CreateOrderDTO, ProductionDashboardResponse, ProductionOrder } from '../types/production';
 import type { UpdateOrderDTO } from '../types/production';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -23,9 +23,21 @@ export const productionService = {
 
     return await res.json();
   },
-  getHistoricalOrders: async () => {
+  getHistoricalOrders: async (filters?: { status?: string, from_date?: string, to_date?: string, id?: string }) => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE_URL}/hornero/authed/orders/list`, {
+    
+    // Construimos los parámetros de búsqueda dinámicamente
+    const params = new URLSearchParams();
+    if (filters) {
+        if (filters.status) params.append('status', filters.status);
+        if (filters.from_date) params.append('from_date', filters.from_date);
+        if (filters.to_date) params.append('to_date', filters.to_date);
+        if (filters.id) params.append('id', filters.id);
+    }
+
+    const url = `${API_BASE_URL}/hornero/authed/orders/list?${params.toString()}`;
+
+    const res = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -37,7 +49,7 @@ export const productionService = {
       throw new Error('Error al obtener el historial de órdenes');
     }
     return await res.json();
-  },
+},
   updateOrder: async (orderId: number, updateData: UpdateOrderDTO) => {
     const token = localStorage.getItem('token');
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -147,5 +159,14 @@ deleteMachine: async (id: number) => {
     method: 'DELETE', 
     headers: { 'Authorization': `Bearer ${token}` } 
   });
-}
+},
+getOrderById: async (id: string | number): Promise<ProductionOrder> => {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const response = await fetch(`${baseUrl}/hornero/authed/orders/list?id=${id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) throw new Error("Error fetching order");
+        const data = await response.json();
+        return Array.isArray(data) ? data[0] : data;
+    }
 };

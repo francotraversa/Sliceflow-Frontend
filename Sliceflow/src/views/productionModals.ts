@@ -1,56 +1,120 @@
 import { productionService } from '../api/productionServices';
 import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO } from '../types/production';
+import { renderProduction } from './productionView';
 
-// --- MODAL: ACTUALIZAR PRODUCCIÓN ---
-export const openUpdateProductionModal = (order: ProductionOrder) => {
+// --- UTILIDAD: BUSCAR NOMBRES ---
+const getMaterialName = (id: number, materials: any[]) => {
+  const m = materials.find(mat => mat.id === id);
+  return m ? m.name : `Material #${id}`;
+};
+
+const getMachineName = (id: number, machines: any[]) => {
+  if (!id) return 'No asignada';
+  const mac = machines.find(m => m.id === id);
+  return mac ? mac.name : `Máquina #${id}`;
+};
+
+// --- MODAL 1: ACTUALIZAR PROGRESO DE PRODUCCIÓN ---
+export const openUpdateProductionModal = async (
+  order: ProductionOrder, 
+  materials: any[] = [], 
+  machines: any[] = []
+) => {
+  // --- REFUERZO: Si las listas vienen vacías, las buscamos del servidor ---
+  let finalMaterials = materials;
+  let finalMachines = machines;
+
+  if (finalMaterials.length === 0 || finalMachines.length === 0) {
+    try {
+      const [resMat, resMac] = await Promise.all([
+        productionService.getMaterials(),
+        productionService.getMachines()
+      ]);
+      finalMaterials = Array.isArray(resMat) ? resMat : [];
+      finalMachines = Array.isArray(resMac) ? resMac : [];
+    } catch (err) {
+      console.error("Error cargando dependencias para actualización:", err);
+    }
+  }
+
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300';
   
   modal.innerHTML = `
-    <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden">
+    <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
       <div class="p-8 border-b border-slate-100 bg-slate-50/50">
         <h2 class="text-xl font-black text-[#0f172a] uppercase tracking-tighter">Actualizar Producción</h2>
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Orden #${order.id} • ${order.client_name}</p>
       </div>
 
       <div class="p-8 space-y-6">
-        <div class="max-h-[350px] overflow-y-auto space-y-4 pr-2 custom-scrollbar text-left">
-          ${order.items.map(item => `
-            <div class="p-5 rounded-3xl border border-slate-100 flex items-center justify-between bg-slate-50/30">
-              <div class="flex-1">
-                <p class="font-black text-slate-700 text-sm">${item.product_name}</p>
-                <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Total: ${item.quantity} piezas</p>
-              </div>
-              <div class="flex items-center gap-4">
-                <input type="number" 
-                       data-item-id="${item.id}"
-                       data-product-name="${item.product_name}"
-                       data-total-qty="${item.quantity}"
-                       value="${item.done_pieces}" 
-                       min="0" 
-                       max="${item.quantity}"
-                       class="item-progress-input w-20 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-              </div>
+        <div class="grid grid-cols-2 gap-4 p-2">
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Material</label>
+                <select id="update-material-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    ${finalMaterials.map(m => `
+                        <option value="${m.id}" ${m.id === order.material_id ? 'selected' : ''}>${m.name}</option>
+                    `).join('')}
+                </select>
             </div>
-          `).join('')}
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Máquina Asignada</label>
+                <select id="update-machine-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="0">Sin asignar / Libre</option>
+                    ${finalMachines.map(m => `
+                        <option value="${m.id}" ${m.id === order.machine_id ? 'selected' : ''}>${m.name} (${m.status})</option>
+                    `).join('')}
+                </select>
+            </div>
+        </div>
+
+        <div class="relative">
+          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-4 ml-3">Progreso de Items</label>
+          <div class="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar text-left">
+            ${order.items.map(item => `
+              <div class="p-4 rounded-3xl border border-slate-100 flex items-center justify-between bg-slate-50/30 group hover:border-blue-200 transition-colors">
+                <div class="flex-1">
+                  <p class="font-black text-slate-700 text-sm">${item.product_name}</p>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase">Meta: ${item.quantity} un.</p>
+                </div>
+                <div class="flex items-center gap-4">
+                  <input type="number" 
+                         data-item-id="${item.id}"
+                         data-product-name="${item.product_name}"
+                         data-total-qty="${item.quantity}"
+                         value="${item.done_pieces}" 
+                         min="0" 
+                         max="${item.quantity}"
+                         class="item-progress-input w-20 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>
 
       <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
         <button id="close-modal-update" class="px-6 py-3 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:bg-slate-200 transition-all">Cancelar</button>
-        <button id="save-production" class="bg-[#0f172a] text-white px-10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black shadow-lg shadow-slate-200 transition-all">Guardar Cambios</button>
+        <button id="save-production" class="bg-[#0f172a] text-white px-10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black shadow-lg shadow-slate-200 transition-all active:scale-95">Guardar Cambios</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
+  
+  // Eventos de botones
   modal.querySelector('#close-modal-update')?.addEventListener('click', () => modal.remove());
 
-modal.querySelector('#save-production')?.addEventListener('click', async () => {
+  modal.querySelector('#save-production')?.addEventListener('click', async () => {
     const saveBtn = modal.querySelector('#save-production') as HTMLButtonElement;
+    
+    const materialId = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
+    const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
+    const machineId = machineIdRaw === "0" ? null : Number(machineIdRaw);
+
     saveBtn.disabled = true;
-    saveBtn.innerText = 'Guardando...';
+    saveBtn.innerText = 'GUARDANDO...';
 
     const updatedItems = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
       id: Number(input.dataset.itemId),
@@ -61,26 +125,27 @@ modal.querySelector('#save-production')?.addEventListener('click', async () => {
 
     const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
 
-    // REPARACIÓN: Eliminamos el campo 'status' para que no pise la lógica del Backend
     const updateData: UpdateOrderDTO = {
       items: updatedItems,
-      done_pieces: totalDone
+      done_pieces: totalDone,
+      material_id: materialId,
+      machine_id: machineId
     };
 
     try {
       await productionService.updateOrder(Number(order.id), updateData);
       modal.remove();
-      // Refrescamos la vista para ver el botón de "Finalizar" si corresponde
-      window.location.reload(); 
+      const freshData = await productionService.getProductionDashboard();
+      renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
     } catch (error) {
       alert("Error al actualizar la producción");
       saveBtn.disabled = false;
       saveBtn.innerText = 'Guardar Cambios';
     }
-});
+  });
 };
 
-// --- MODAL: NUEVA ORDEN ---
+// --- MODAL 2: NUEVA ORDEN ---
 export const openNewOrderModal = async () => {
     let materials: any[] = [];
     let machines: any[] = [];
@@ -110,7 +175,6 @@ export const openNewOrderModal = async () => {
       </div>
 
       <form id="form-new-order" class="p-8 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar text-left">
-        
         <div class="bg-blue-50/30 p-5 rounded-[28px] border border-blue-100/50 mb-2">
           <label class="text-[10px] font-black uppercase text-blue-500 tracking-widest block mb-2 ml-1">ID de Orden (Manual)</label>
           <input type="number" name="id" placeholder="Ej: 2024" required class="w-full bg-white border border-blue-200 rounded-2xl px-5 py-3 text-sm font-black text-blue-900 outline-none">
@@ -136,7 +200,7 @@ export const openNewOrderModal = async () => {
           </div>
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Prioridad</label>
-            <select name="priority" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+            <select name="priority" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
               <option value="P3">P3 - Normal</option>
               <option value="P2">P2 - Alta</option>
               <option value="P1">P1 - Crítica 🔥</option>
@@ -161,7 +225,7 @@ export const openNewOrderModal = async () => {
 
         <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Asignar Máquina</label>
-            <select name="machine_id" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+            <select name="machine_id" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
                 <option value="">Pendiente de asignación</option>
                 ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
             </select>
@@ -170,11 +234,11 @@ export const openNewOrderModal = async () => {
         <div class="space-y-4 pt-2">
           <div class="flex justify-between items-center border-b border-slate-100 pb-2">
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Piezas / STLs</label>
-            <button type="button" id="add-item-row" class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase hover:bg-blue-100 transition-colors">+ Añadir</button>
+            <button type="button" id="add-item-row" class="text-[9px] font-black bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full uppercase hover:bg-blue-100 transition-colors">+ Añadir Fila</button>
           </div>
-          <div id="items-container" class="space-y-3 pr-2">
+          <div id="items-container" class="space-y-3">
             <div class="item-row flex gap-3">
-              <input type="text" placeholder="Nombre STL" class="item-name flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required>
+              <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required>
               <input type="number" placeholder="Cant." class="item-qty w-24 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required min="1">
             </div>
           </div>
@@ -182,19 +246,19 @@ export const openNewOrderModal = async () => {
 
         <div>
           <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Notas</label>
-          <textarea name="notes" placeholder="Ej: Terminación superficial lisa..." class="w-full bg-slate-50 border border-slate-200 rounded-[24px] px-5 py-4 text-xs font-bold outline-none h-24 resize-none"></textarea>
+          <textarea name="notes" placeholder="Instrucciones especiales..." class="w-full bg-slate-50 border border-slate-200 rounded-[24px] px-5 py-4 text-xs font-bold outline-none h-24 resize-none"></textarea>
         </div>
 
         <div class="flex gap-3 pt-4 border-t border-slate-50">
           <button type="button" id="btn-cancel-new" class="flex-1 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Cancelar</button>
-          <button type="submit" id="btn-submit-new" class="flex-[2] bg-[#0f172a] text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-200 hover:bg-black active:scale-95 transition-all">Lanzar Orden</button>
+          <button type="submit" id="btn-submit-new" class="flex-[2] bg-[#0f172a] text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-200 hover:bg-black transition-all">Lanzar Orden</button>
         </div>
       </form>
     </div>`;
 
     document.body.appendChild(modal);
 
-    // Lógica Buscador Material
+    // Búsqueda de Materiales
     const matInput = modal.querySelector('#mat-search') as HTMLInputElement;
     const matResults = modal.querySelector('#mat-results') as HTMLDivElement;
     const matHidden = modal.querySelector('#mat-id-hidden') as HTMLInputElement;
@@ -223,7 +287,7 @@ export const openNewOrderModal = async () => {
         }
     });
 
-    // Lógica Filas Dinámicas
+    // Filas Dinámicas
     const container = modal.querySelector('#items-container')!;
     modal.querySelector('#add-item-row')?.addEventListener('click', () => {
         const row = document.createElement('div');
@@ -241,6 +305,9 @@ export const openNewOrderModal = async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = modal.querySelector('#btn-submit-new') as HTMLButtonElement;
+        
+        if(!matHidden.value) { alert("Por favor seleccioná un material de la lista"); return; }
+
         btn.disabled = true; btn.innerText = 'PROCESANDO...';
 
         const fd = new FormData(form);
@@ -261,7 +328,7 @@ export const openNewOrderModal = async () => {
             notes: String(fd.get('notes') || ""),
             estimated_hours: Number(fd.get('estimated_hours')),
             estimated_minutes: Number(fd.get('estimated_minutes_form')),
-            deadline: String(fd.get('deadline')), // Formato YYYY-MM-DD
+            deadline: String(fd.get('deadline')),
             operator_id: 1, 
             machine_id: mId ? Number(mId) : undefined,
             price: Number(fd.get('price') || 0)
@@ -270,13 +337,10 @@ export const openNewOrderModal = async () => {
         try {
             await productionService.createOrder(payload);
             modal.remove();
-            
-            // Refresco manual forzado
             const freshData = await productionService.getProductionDashboard();
             const { renderProduction } = await import('./productionView');
             renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
         } catch (err) {
-            console.error(err);
             alert("Error al crear la orden: Revisá que el ID no esté duplicado.");
             btn.disabled = false; btn.innerText = 'Lanzar Orden';
         }
@@ -284,4 +348,113 @@ export const openNewOrderModal = async () => {
 
     modal.querySelector('#close-modal-new')?.addEventListener('click', () => modal.remove());
     modal.querySelector('#btn-cancel-new')?.addEventListener('click', () => modal.remove());
+};
+
+export const openOrderDetailModal = (
+  order: ProductionOrder, 
+  materials: any[] = [], 
+  machines: any[] = []
+) => {
+    const materialName = getMaterialName(order.material_id, materials);
+    const machineName = getMachineName(order.machine_id, machines);
+
+    // Lógica para el sello de finalización
+    let finishBadge = '';
+    if (order.finish_time) {
+        const finishDate = new Date(order.finish_time);
+        const deadlineDate = new Date(order.deadline);
+        const isLate = finishDate > deadlineDate;
+
+        finishBadge = `
+            <div class="mt-4 p-4 ${isLate ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'} border rounded-2xl">
+                <p class="text-[9px] font-black uppercase ${isLate ? 'text-amber-600' : 'text-emerald-600'} tracking-widest mb-1">
+                    ${isLate ? '⚠️ Finalizada con retraso' : '✅ Finalizada a tiempo'}
+                </p>
+                <p class="text-xs font-black text-slate-700">
+                    ${finishDate.toLocaleString()}
+                </p>
+            </div>
+        `;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-[#0f172a]/80 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300';
+    
+    const priorityColor = order.priority === 'P1' ? 'text-red-500 bg-red-50' : 'text-blue-500 bg-blue-50';
+
+    modal.innerHTML = `
+    <div class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
+        <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h2 class="text-3xl font-black text-[#0f172a] tracking-tighter">ORDEN #${order.id}</h2>
+                    <span class="px-3 py-1 rounded-lg text-[10px] font-black ${priorityColor}">${order.priority}</span>
+                </div>
+                <p class="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">${order.client_name}</p>
+            </div>
+            <button id="close-detail" class="text-slate-300 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
+        </div>
+
+        <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Estado y Cronología</label>
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 space-y-3">
+                        <p class="text-xs"><b>Estado actual:</b> <span class="capitalize text-blue-600 font-bold">${order.status}</span></p>
+                        <p class="text-xs text-slate-500"><b>Límite (Deadline):</b> ${new Date(order.deadline).toLocaleDateString()}</p>
+                        <p class="text-xs text-slate-500"><b>Estimado:</b> ${order.estimated_minutes} min</p>
+                        ${finishBadge}
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Recursos Asignados</label>
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 space-y-3">
+                        <p class="text-xs"><b>Material:</b> <span class="text-slate-900 font-bold">${materialName}</span></p>
+                        <p class="text-xs"><b>Máquina:</b> <span class="text-slate-900 font-bold">${machineName}</span></p>
+                        <p class="text-xs font-medium text-slate-400">Operador ID: #${order.operator_id}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Desglose de Producción (${order.done_pieces} / ${order.total_pieces} piezas)</label>
+                    <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        ${order.items.map(item => `
+                            <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                                <div>
+                                    <p class="text-sm font-black text-slate-700">${item.product_name}</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase">Meta: ${item.quantity} unidades</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-blue-600">${item.done_pieces}</span>
+                                    <span class="text-xs font-bold text-slate-300">/ ${item.quantity}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="bg-blue-50/50 p-6 rounded-[32px] border border-blue-100">
+                    <label class="text-[10px] font-black uppercase text-blue-400 tracking-widest block mb-2">Notas de Auditoría</label>
+                    <p class="text-sm text-slate-600 italic">"${order.notes || 'Sin observaciones registradas'}"</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+            <div class="text-2xl font-black text-slate-900">
+                <span class="text-[10px] text-slate-400 uppercase block leading-none">Presupuesto Final</span>
+                $${(order.price || 0).toLocaleString()}
+            </div>
+            <div class="flex gap-3">
+                <button id="btn-print-ticket" class="bg-[#0f172a] text-white px-8 py-4 rounded-2xl text-xs font-black uppercase hover:bg-black transition-all shadow-lg active:scale-95">
+                    🖨️ Imprimir Ticket
+                </button>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.appendChild(modal);
+    modal.querySelector('#close-detail')?.addEventListener('click', () => modal.remove());
 };

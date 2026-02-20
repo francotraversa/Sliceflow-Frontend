@@ -28,6 +28,7 @@ export interface ProductionOrder {
     total_pieces: number;
     estimated_minutes: number;
     deadline: string;
+    finish_time?: string;
     status: string; // pending, in-progress, completed
     done_pieces: number;
     operator_id: number;
@@ -57,8 +58,8 @@ export interface UpdateOrderDTO {
     deadline?: string;
     items?: CreateOrderItemDTO[];
     operator_id?: number;
-    material_id?: number;
-    machine_id?: number;
+    material_id?: number | null;
+    machine_id?: number | null;
 }
 
 

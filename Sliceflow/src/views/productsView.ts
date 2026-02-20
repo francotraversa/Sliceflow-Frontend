@@ -151,9 +151,16 @@ const renderStockMovementModal = (app: HTMLDivElement, products: Product[], pres
         </div>
 
         <div>
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Motivo (corto)</label>
-          <input type="text" name="reason" placeholder="Ej: Venta, Compra, Ajuste"
-            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Motivo del Ajuste</label>
+          <select name="reason" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none cursor-pointer hover:border-blue-300 transition-colors">
+            <option value="" disabled selected>Seleccioná un motivo...</option>
+            <option value="Venta">Venta</option>
+            <option value="Compra">Compra / Reposición</option>
+            <option value="Ajuste">Ajuste de Inventario (Manual)</option>
+            <option value="Desperdicio">Desperdicio / Error de Impresión</option>
+            <option value="Uso Interno">Uso Interno / Pruebas</option>
+            <option value="Devolución">Devolución de Cliente</option>
+          </select>
         </div>
 
         <div>
