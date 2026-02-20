@@ -149,17 +149,21 @@ export const openUpdateProductionModal = async (
 export const openNewOrderModal = async () => {
     let materials: any[] = [];
     let machines: any[] = [];
-
+    let allOrders: any[] = [];
     try {
-        const [resMat, resMac] = await Promise.all([
+        const [resMat, resMac, resHis] = await Promise.all([
             productionService.getMaterials(),
-            productionService.getMachines()
+            productionService.getMachines(),
+            productionService.getHistoricalOrders()
         ]);
         materials = Array.isArray(resMat) ? resMat : [];
         machines = Array.isArray(resMac) ? resMac : [];
+        allOrders = Array.isArray(resHis) ? resHis : [];
     } catch (err) {
         console.error("Error cargando dependencias:", err);
     }
+
+    const uniqueClients = [...new Set(allOrders.map((o: any) => o.client_name))].sort();
 
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-[#0f172a]/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300';
@@ -183,7 +187,7 @@ export const openNewOrderModal = async () => {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Cliente</label>
-            <input type="text" name="client_name" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+            <input type="text" name="client_name" id="client_name_input" list="clients-list" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none" placeholder="Nombre o buscar...">
           </div>
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Deadline</label>
@@ -253,6 +257,11 @@ export const openNewOrderModal = async () => {
           <button type="button" id="btn-cancel-new" class="flex-1 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Cancelar</button>
           <button type="submit" id="btn-submit-new" class="flex-[2] bg-[#0f172a] text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-200 hover:bg-black transition-all">Lanzar Orden</button>
         </div>
+
+        <datalist id="clients-list">
+          ${uniqueClients.map((client: string) => `<option value="${client}">`).join('')}
+        </datalist>
+
       </form>
     </div>`;
 

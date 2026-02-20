@@ -418,8 +418,8 @@ export const renderProducts = (products: Product[], app: HTMLDivElement) => {
             <table class="w-full text-left">
               <thead>
                 <tr class="text-[12px] uppercase tracking-widest text-slate-400 font-black border-b border-slate-100">
-                  <th class="px-6 py-4">SKU</th>
                   <th class="px-6 py-4">Producto</th>
+                  <th class="px-6 py-4">SKU</th>
                   <th class="px-6 py-4 text-center">Stock Actual</th>
                   <th class="px-6 py-4 text-center">Precio</th>
                   <th class="px-6 py-4 text-right">Acciones</th>

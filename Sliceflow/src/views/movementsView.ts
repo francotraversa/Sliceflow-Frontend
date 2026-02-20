@@ -145,49 +145,61 @@ export const renderMovements = async (movements: StockMovement[], app: HTMLDivEl
     const term = (searchInput.value || '').toLowerCase().trim();
 
     const filtered = state.filter(m => {
-      const p = productMap.get(m.stock_sku);
-      const productName = (p?.name || m.stock_sku).toLowerCase();
-      const reason = (m.reason || '').toLowerCase();
-      return !term || productName.includes(term) || reason.includes(term) || m.stock_sku.toLowerCase().includes(term);
+        const p = productMap.get(m.stock_sku);
+        const productName = (p?.name || m.stock_sku).toLowerCase();
+        const reason = (m.reason || '').toLowerCase();
+        const description = (m.description || '').toLowerCase();
+        const sku = m.stock_sku.toLowerCase();
+        return !term || productName.includes(term) || reason.includes(term) || description.includes(term) || sku.includes(term);
     });
 
     body.innerHTML = filtered.map(m => {
-      const p = productMap.get(m.stock_sku);
-      const productName = p?.name || m.stock_sku;
+        const p = productMap.get(m.stock_sku);
+        const productName = p?.name || m.stock_sku;
+        const isCritical = p && m.qty_after <= (p.min_qty ?? 0);
 
-      const estado = (p && m.qty_after <= (p.min_qty ?? 0)) ? 'Crítico' : 'Normal';
-      const estadoClass = estado === 'Crítico'
-        ? 'bg-red-100 text-red-700'
-        : 'bg-slate-900 text-white';
-
-      return `
+        return `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="px-6 py-4 font-bold text-slate-700">${formatDateTime(m.created_at)}</td>
-          <td class="px-6 py-4 font-black text-[#0f172a]">${productName}</td>
+            <td class="px-6 py-4 text-[11px] font-bold text-slate-500">${formatDateTime(m.created_at)}</td>
+            <td class="px-6 py-4 font-black text-[#0f172a] text-sm">${productName}</td>
+            
+            <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-2">
+                    <span class="text-lg">${['IN','RETURN'].includes(m.type) ? '↑' : ['OUT','LOSS','SCRAP'].includes(m.type) ? '↓' : '↔'}</span>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black ${pillTipo(m.type)}">
+                        ${labelTipo(m.type)}
+                    </span>
+                </span>
+            </td>
 
-          <td class="px-6 py-4">
-            <span class="inline-flex items-center gap-2">
-              <span class="text-lg">${['IN','RETURN'].includes(m.type) ? '↑' : ['OUT','LOSS','SCRAP'].includes(m.type) ? '↓' : '↔'}</span>
-              <span class="px-3 py-1 rounded-full text-[11px] font-black ${pillTipo(m.type)}">
-                ${labelTipo(m.type)}
-              </span>
-            </span>
-          </td>
+            <td class="px-6 py-4 text-center font-bold text-slate-400">${m.qty_before}</td>
+            <td class="px-6 py-4 text-center font-black ${deltaClass(m.qty_delta)}">${deltaText(m.qty_delta)}</td>
+            <td class="px-6 py-4 text-center font-black text-slate-700">${m.qty_after}</td>
+            
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-600">${m.reason || '-'}</span>
+                
+                ${m.description ? `
+                  <button 
+                    onclick="alert('Descripción completa de la Trasaccion:\\n\\n${m.description.replace(/'/g, "\\'")}')" 
+                    class="text-slate-400 hover:text-blue-500 transition-colors text-base" 
+                    title="Ver nota completa">
+                    👁️
+                  </button>
+                ` : ''}
+              </div>
+            </td>
 
-          <td class="px-6 py-4 text-center font-black text-slate-700">${m.qty_before}</td>
-          <td class="px-6 py-4 text-center font-black ${deltaClass(m.qty_delta)}">${deltaText(m.qty_delta)}</td>
-          <td class="px-6 py-4 text-center font-black text-slate-700">${m.qty_after}</td>
+            <td class="px-6 py-4 text-center font-bold text-slate-700">User #${m.created_by}</td>
 
-          <td class="px-6 py-4 font-bold text-slate-700">${m.reason || '-'}</td>
-          <td class="px-6 py-4 font-bold text-slate-700">User #${m.created_by}</td>
-
-          <td class="px-6 py-4 text-center">
-            <span class="px-3 py-1 rounded-full text-[11px] font-black ${estadoClass}">
-              ${estado}
-            </span>
-          </td>
+            <td class="px-6 py-4 text-center">
+                <span class="px-3 py-1 rounded-full text-[9px] font-black ${isCritical ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}">
+                    ${isCritical ? 'CRÍTICO' : 'OK'}
+                </span>
+            </td>
         </tr>
-      `;
+        `;
     }).join('');
   };
 

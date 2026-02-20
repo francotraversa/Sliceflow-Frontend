@@ -26,7 +26,6 @@ export const productionService = {
   getHistoricalOrders: async (filters?: { status?: string, from_date?: string, to_date?: string, id?: string }) => {
     const token = localStorage.getItem('token');
     
-    // Construimos los parámetros de búsqueda dinámicamente
     const params = new URLSearchParams();
     if (filters) {
         if (filters.status) params.append('status', filters.status);
