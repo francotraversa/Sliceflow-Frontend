@@ -2,9 +2,6 @@ import { stockService } from '../api/stockServices';
 import { renderDashboard } from './dashboardView';
 import { renderMovements } from './movementsView';
 import type { ProductCreateRequest, Product, ProductUpdateRequest } from '../types/stock';
-import { getUserFromToken } from '../api/authServices';
-const { role } = getUserFromToken();
-const isAdmin = role.toLowerCase() === 'admin';
 // -------------------------------
 // MODAL: NUEVO PRODUCTO
 // -------------------------------
