@@ -6,8 +6,6 @@ import { renderProduction } from './productionView';
 import { productionService } from '../api/productionServices';
 import { renderUsers } from './userView';
 const { user, role } = getUserFromToken();
-const isAdmin = role === "admin";
-
 
 const renderStatCard = (title: string, value: any, subtitle: string, icon: string, color: string) => `
   <div class="bg-white rounded-[28px] p-8 shadow-lg border border-slate-100 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group">
