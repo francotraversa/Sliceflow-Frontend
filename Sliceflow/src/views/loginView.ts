@@ -7,13 +7,10 @@ export const renderLogin = (error: string | null = null, app: HTMLDivElement) =>
       <div class="hidden lg:flex flex-col justify-between w-[45%] bg-[#0f172a] p-16 text-white relative overflow-hidden">
         <div class="relative z-10">
           <div class="flex items-center gap-3 mb-20">
-            <div class="bg-[#4391d4] p-2 rounded-lg shadow-lg">
-               <img src="/logo.png" alt="Logo" class="w-8 h-8 object-contain invert">
-            </div>
             <span class="text-xl font-bold tracking-tight">Hornero3DX</span>
           </div>
-          <h1 class="text-6xl font-extrabold leading-tight mb-8">Control de Stock<br>para tu Laboratorio</h1>
-          <p class="text-slate-400 text-lg max-w-md">Gestiona tus insumos y to produccion en tiempo real.</p>
+          <h1 class="text-6xl font-extrabold leading-tight mb-8">Control de Stock y Produccion<br>para tu Laboratorio</h1>
+          <p class="text-slate-400 text-lg max-w-md">Gestiona tus insumos y tu produccion en tiempo real.</p>
         </div>
         <div class="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-[#4391d4]/10 rounded-full blur-3xl"></div>
       </div>
