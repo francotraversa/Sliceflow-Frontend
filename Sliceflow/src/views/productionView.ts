@@ -66,15 +66,28 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
           </div>
 
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capacidad Ociosa</span>
-              <div class="p-2 bg-slate-50 rounded-lg text-slate-400 text-xs">📊</div>
-            </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${data.utilization_rate}%</h2>
-            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
-              <div class="bg-[#0f172a] h-full transition-all duration-1000" style="width: ${data.utilization_rate}%"></div>
-            </div>
-          </div>
+  <div class="flex justify-between items-start mb-4">
+    <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capacidad Ociosa</span>
+    <div class="p-2 bg-slate-50 rounded-lg text-slate-400 text-xs">📊</div>
+  </div>
+  
+  <div class="flex items-baseline gap-1">
+    <h2 class="text-3xl font-black text-[#0f172a]">
+      ${(100 - Number(data.utilization_rate || 0)).toFixed(2)}%
+    </h2>
+    <span class="text-[10px] font-bold text-slate-300 uppercase">Libre</span>
+  </div>
+
+  <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+    <div class="bg-[#0f172a] h-full transition-all duration-1000" 
+         style="width: ${data.utilization_rate}%">
+    </div>
+  </div>
+  
+  <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tight">
+    Uso del taller: ${Number(data.utilization_rate || 0).toFixed(2)}%
+  </p>
+</div>
         </div>
 
         <div class="space-y-12">

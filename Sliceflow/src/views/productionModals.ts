@@ -90,7 +90,19 @@ export const openUpdateProductionModal = async (
                 </div>
               </div>
             `).join('')}
+            <div class="space-y-3 pt-4 border-t border-slate-100">
+          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block ml-1">Bitácora / Seguimiento del Cliente</label>
+          
+          <div class="bg-slate-50 rounded-2xl p-4 max-h-[100px] overflow-y-auto border border-slate-100 mb-2">
+            <p class="text-[11px] font-bold text-slate-500 whitespace-pre-wrap leading-relaxed">
+              ${order.notes || 'Sin registros previos.'}
+            </p>
           </div>
+
+          <textarea id="update-new-note" 
+                    placeholder="Escribí aquí lo que solicita el cliente o el avance..." 
+                    class="w-full bg-blue-50/30 border border-blue-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all min-h-[60px] resize-none"
+          ></textarea>
         </div>
       </div>
 
@@ -107,41 +119,61 @@ export const openUpdateProductionModal = async (
   modal.querySelector('#close-modal-update')?.addEventListener('click', () => modal.remove());
 
   modal.querySelector('#save-production')?.addEventListener('click', async () => {
-    const saveBtn = modal.querySelector('#save-production') as HTMLButtonElement;
+      const saveBtn = modal.querySelector('#save-production') as HTMLButtonElement;
+      
+      // 1. CAPTURAR NOTAS (Bitácora acumulativa)
+      const newNoteInput = modal.querySelector('#update-new-note') as HTMLTextAreaElement;
+      const newNoteText = newNoteInput.value.trim();
+      let finalNotes = order.notes || ''; // Tomamos lo que ya existe en la BD
+
+      if (newNoteText !== "") {
+    const now = new Date();
+    // Agregamos la fecha y hora
+    const timestamp = `${now.getDate()}/${now.getMonth() + 1} ${now.getHours()}:${now.getMinutes()}`;
+    const entry = `[${timestamp}]: ${newNoteText}`;
     
-    const materialId = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
-    const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
-    const machineId = machineIdRaw === "0" ? null : Number(machineIdRaw);
+    // El \n es vital para que Go lo guarde como multilínea
+    finalNotes = finalNotes ? `${finalNotes}\n${entry}` : entry;
+  }
 
-    saveBtn.disabled = true;
-    saveBtn.innerText = 'GUARDANDO...';
+      // 2. CAPTURAR MATERIAL Y MÁQUINA
+      const materialId = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
+      const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
+      const machineId = machineIdRaw === "0" ? null : Number(machineIdRaw);
 
-    const updatedItems = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
-      id: Number(input.dataset.itemId),
-      product_name: input.dataset.productName,
-      quantity: Number(input.dataset.totalQty),
-      done_pieces: Number(input.value)
-    }));
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'GUARDANDO...';
 
-    const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
+      // 3. CAPTURAR ITEMS
+      const updatedItems = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
+        id: Number(input.dataset.itemId),
+        product_name: input.dataset.productName,
+        quantity: Number(input.dataset.totalQty),
+        notes: finalNotes,
+        done_pieces: Number(input.value),
+      }));
 
-    const updateData: UpdateOrderDTO = {
-      items: updatedItems,
-      done_pieces: totalDone,
-      material_id: materialId,
-      machine_id: machineId
-    };
+      const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
 
-    try {
-      await productionService.updateOrder(Number(order.id), updateData);
-      modal.remove();
-      const freshData = await productionService.getProductionDashboard();
-      renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
-    } catch (error) {
-      alert("Error al actualizar la producción");
-      saveBtn.disabled = false;
-      saveBtn.innerText = 'Guardar Cambios';
-    }
+      // 4. ARMAR PAYLOAD FINAL
+      const updateData: UpdateOrderDTO = {
+        items: updatedItems,
+        done_pieces: totalDone,
+        material_id: materialId,
+        machine_id: machineId,
+        notes: finalNotes // <--- ACÁ PASAMOS LA BITÁCORA COMBINADA
+      };
+
+      try {
+        await productionService.updateOrder(Number(order.id), updateData);
+        modal.remove();
+        const freshData = await productionService.getProductionDashboard();
+        renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
+      } catch (error) {
+        alert("Error al actualizar la producción");
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Guardar Cambios';
+      }
   });
 };
 
