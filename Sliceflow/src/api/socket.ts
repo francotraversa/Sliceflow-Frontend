@@ -1,50 +1,52 @@
 const WS_URL = import.meta.env.VITE_API_BASE_URL.replace(/^http/, 'ws');
 
-let retryTimer: ReturnType<typeof setTimeout> | null = null;
-
 export const connectSocket = (onMessage: () => void) => {
-  if (retryTimer) {
-    clearTimeout(retryTimer);
-    retryTimer = null;
-  }
-
   const token = localStorage.getItem('token');
-
-  // Try the protected route first; the token is sent as a query param.
-  // Fiber's JWT middleware must be configured with TokenLookup: "query:token"
-  // If that isn't the case on the backend, the connection will be rejected
-  // and we fall back to the legacy public route.
   const PROTECTED = `${WS_URL}/hornero/authed/ws/dashboard${token ? `?token=${encodeURIComponent(token)}` : ''}`;
-  const LEGACY = `${WS_URL}/hornero/ws/dashboard`;
+  const LEGACY    = `${WS_URL}/hornero/ws/dashboard`;
+
+  let attempts = 0;
+  const MAX_ATTEMPTS = 2; // try each route cycle at most 2 times before giving up
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const cleanup = () => {
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+  };
 
   const tryConnect = (url: string, isFallback = false) => {
-    console.log(`🔌 WS conectando → ${isFallback ? '[fallback]' : '[authed]'}`);
+    console.log(`🔌 WS → ${isFallback ? '[legacy]' : '[authed]'}`);
     const socket = new WebSocket(url);
 
     socket.onopen = () =>
-      console.log(`✅ WS conectado ${isFallback ? '(ruta legacy)' : '(ruta protegida)'}`);
+      console.log(`✅ WS abierto ${isFallback ? '(legacy)' : '(authed)'}`);
 
     socket.onmessage = () => {
-      console.log('🔄 Cambio detectado en Hornero3DX');
+      attempts = 0; // reset on real activity
       onMessage();
     };
 
     socket.onclose = (e) => {
-      // 1008 = Policy Violation (bad token on protected route) → try legacy
-      // 1006 = Abnormal closure (route doesn't exist)
-      if (!isFallback && (e.code === 1008 || e.code === 1006 || e.code === 1003)) {
-        console.warn(`⚠️ Ruta protegida rechazada (code ${e.code}), intentando ruta legacy...`);
+      // Protected rejected → try legacy once
+      if (!isFallback && e.code !== 1000) {
+        console.warn(`⚠️ Authed rechazado (${e.code}) → legacy...`);
         tryConnect(LEGACY, true);
         return;
       }
 
-      console.log(`❌ WS cerrado (code ${e.code}). Reintentando en 8s...`);
-      retryTimer = setTimeout(() => connectSocket(onMessage), 8000);
+      // Both failed or legacy also dropped
+      attempts++;
+      if (attempts >= MAX_ATTEMPTS) {
+        cleanup();
+        console.warn('🔕 WebSocket no disponible (ambas rutas fallaron). Live-updates off.');
+        return;
+      }
+
+      const delay = attempts * 8000; // 8s, 16s
+      console.log(`❌ WS cerrado (${e.code}). Reintento ${attempts}/${MAX_ATTEMPTS} en ${delay / 1000}s...`);
+      retryTimer = setTimeout(() => tryConnect(PROTECTED), delay);
     };
 
-    socket.onerror = () => {
-      // onerror fires before onclose; just let onclose handle the retry
-    };
+    socket.onerror = () => { /* onclose handles it */ };
   };
 
   tryConnect(PROTECTED);
