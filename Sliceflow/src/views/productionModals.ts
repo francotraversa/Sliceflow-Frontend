@@ -158,15 +158,7 @@ export const openUpdateProductionModal = async (
       finalNotes = finalNotes ? `${finalNotes}\n${entry}` : entry;
     }
 
-    // 2. CAPTURAR MATERIAL Y MÁQUINA
-    const materialIdRaw = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
-    const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
 
-    // Guard: never send 0 as material — backend will reject it
-    const materialId = materialIdRaw > 0 ? materialIdRaw : undefined;
-    // 0 = "Sin asignar" → send null to unassign; otherwise send the id
-    const machineId: number | null | undefined =
-      machineIdRaw === '0' ? null : machineIdRaw ? Number(machineIdRaw) : undefined;
 
     saveBtn.disabled = true;
     saveBtn.innerText = 'GUARDANDO...';
@@ -188,7 +180,8 @@ export const openUpdateProductionModal = async (
       };
     });
 
-    const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
+    const totalDone = updatedItems.reduce((acc, item) => acc + (item.done_pieces ?? 0), 0);
+
 
     // 4. ARMAR PAYLOAD FINAL — price is now per-item, backend sums into TotalPrice
     const updateData: UpdateOrderDTO = {
