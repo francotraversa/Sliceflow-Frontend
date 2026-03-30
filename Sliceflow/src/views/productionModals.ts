@@ -1,5 +1,6 @@
 import { productionService } from '../api/productionServices';
-import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO, UpdateOrderItemDTO } from '../types/production';
+import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO } from '../types/production';
+
 import { renderProduction } from './productionView';
 import { getUserFromToken } from '../api/authServices';
 
@@ -44,8 +45,9 @@ export const openUpdateProductionModal = async (
                 <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Material</label>
                 <select id="update-material-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                     ${finalMaterials.map(m => `
-                        <option value="${m.id}" ${m.id === order.material_id ? 'selected' : ''}>${m.name}</option>
+                        <option value="${m.id}">${m.name}</option>
                     `).join('')}
+
                 </select>
             </div>
             <div>
@@ -53,8 +55,9 @@ export const openUpdateProductionModal = async (
                 <select id="update-machine-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                     <option value="0">Sin asignar / Libre</option>
                     ${finalMachines.map(m => `
-                        <option value="${m.id}" ${m.id === order.machine_id ? 'selected' : ''}>${m.name} (${m.status})</option>
+                        <option value="${m.id}">${m.name} (${m.status})</option>
                     `).join('')}
+
                 </select>
             </div>
         </div>
@@ -66,7 +69,8 @@ export const openUpdateProductionModal = async (
               <div class="item-update-row rounded-[20px] border border-slate-100 bg-slate-50/40 p-4 space-y-3 group hover:border-blue-100 transition-colors">
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="font-black text-slate-800 text-sm">${item.stl_name}</p>
+                    <p class="font-black text-slate-800 text-sm">${item.product_name}</p>
+
                     <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Meta: ${item.quantity} un.</p>
                   </div>
                   <div class="flex items-center gap-2">
@@ -74,7 +78,8 @@ export const openUpdateProductionModal = async (
                     <input type="number"
                            class="item-progress-input w-18 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-400 outline-none w-[72px]"
                            data-item-id="${item.id}"
-                           data-stl-name="${item.stl_name}"
+                           data-stl-name="${item.product_name}"
+
                            data-total-qty="${item.quantity}"
                            value="${item.done_pieces}"
                            min="0" max="${item.quantity}">
@@ -168,13 +173,12 @@ export const openUpdateProductionModal = async (
 
     // 3. CAPTURAR ITEMS — cada row tiene: done_pieces, price, material_id, machine_id
     const itemRows = Array.from(modal.querySelectorAll('.item-progress-input'));
-    const updatedItems: UpdateOrderItemDTO[] = itemRows.map((input: any) => {
+    const updatedItems: CreateOrderItemDTO[] = itemRows.map((input: any) => {
       const row     = input.closest('.item-update-row') as HTMLElement;
       const macVal  = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
       const matVal  = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
       const pricVal = (row?.querySelector('.item-price-input') as HTMLInputElement | null)?.value ?? '0';
       return {
-        id:          Number(input.dataset.itemId),
         stl_name:    input.dataset.stlName || '',
         quantity:    Number(input.dataset.totalQty),
         done_pieces: Number(input.value),
@@ -190,10 +194,9 @@ export const openUpdateProductionModal = async (
     const updateData: UpdateOrderDTO = {
       items: updatedItems,
       done_pieces: totalDone,
-      material_id: materialId,
-      machine_id: machineId,
       notes: finalNotes,
     };
+
 
     try {
       await productionService.updateOrder(Number(order.id), updateData);
@@ -574,7 +577,8 @@ export const openOrderDetailModal = (
                             || (item.material_id ? (materials.find((m) => m.id === item.material_id)?.name || '#' + item.material_id) : null);
                           const iMac = (item as any).machine?.name
                             || (item.machine_id ? (machines.find((m) => m.id === item.machine_id)?.name || '#' + item.machine_id) : null);
-                          const iName = item.stl_name || (item as any).StlName || (item as any).product_name || '—';
+                          const iName = item.product_name || '—';
+
                           return `
                           <div class="bg-white rounded-2xl px-3 py-2.5 border border-slate-100">
                             <p class="text-xs font-black text-slate-700 mb-1">${iName}</p>
@@ -596,7 +600,8 @@ export const openOrderDetailModal = (
                         ${order.items.map(item => `
                             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                                 <div>
-                                    <p class="text-sm font-black text-slate-700">${item.stl_name || (item as any).StlName || (item as any).product_name || '—'}</p>
+                                    <p class="text-sm font-black text-slate-700">${item.product_name || '—'}</p>
+
                                     <p class="text-[10px] text-slate-400 font-bold uppercase">Meta: ${item.quantity} unidades</p>
                                 </div>
                                 <div class="text-right">
@@ -643,7 +648,8 @@ export const openOrderDetailModal = (
         || (item.material_id ? materials.find((m: any) => m.id === item.material_id)?.name || '' : '');
       const iMac = (item as any).machine?.name
         || (item.machine_id ? machines.find((m: any) => m.id === item.machine_id)?.name || '' : '');
-      const name  = item.stl_name || (item as any).StlName || (item as any).product_name || '';
+      const name  = item.product_name || '';
+
       return `
         <tr>
           <td>${iMac}</td>

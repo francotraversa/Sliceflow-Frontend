@@ -159,7 +159,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                         const iPct = item.quantity > 0 ? Math.round((item.done_pieces / item.quantity) * 100) : 0;
                         return `
                         <tr class="hover:bg-slate-50/60 transition-colors">
-                          <td class="px-6 py-5 font-black text-slate-800 text-sm">${(item as any).stl_name || (item as any).product_name || '—'}</td>
+                          <td class="px-6 py-5 font-black text-slate-800 text-sm">${item.product_name || '—'}</td>
                           <td class="px-6 py-5">
                             ${iMat
                               ? `<span class="bg-blue-50 text-blue-700 text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wide">${iMat}</span>`
