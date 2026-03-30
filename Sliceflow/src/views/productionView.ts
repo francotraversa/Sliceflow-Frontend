@@ -5,7 +5,7 @@ import { getUserFromToken } from '../api/authServices';
 
 export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardResponse) => {
   const { role } = getUserFromToken();
-  const isAdmin = role.toLowerCase() === 'admin';
+  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner';
   app.innerHTML = `
       </header>
           <div class="min-h-screen bg-[#f8fafc] font-sans text-slate-900 animate-in fade-in duration-500">
@@ -92,27 +92,28 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
 
         <div class="space-y-12">
           ${data.active_orders.length > 0 ? data.active_orders.map((order, index) => {
-            const progress = order.total_pieces > 0 ? Math.round((order.done_pieces / order.total_pieces) * 100) : 0;
-            
-            const formatDate = (dateStr: string) => {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ' ' + 
-                       date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            };
+    const progress = order.total_pieces > 0 ? Math.round((order.done_pieces / order.total_pieces) * 100) : 0;
 
-            const creationDate = formatDate(order.created_at);
-            const deadlineDate = order.deadline ? formatDate(order.deadline) : 'Sin definir';
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
-            const materialName = (order.material && typeof order.material === 'object') 
-              ? (order.material as any).name 
-              : 'S/M';
-            const isReady = order.status === 'ready' || order.done_pieces >= order.total_pieces;
+    const creationDate = formatDate(order.created_at);
+    const deadlineDate = order.deadline ? formatDate(order.deadline) : 'Sin definir';
 
-            return `
+    const materialName = (order.material && typeof order.material === 'object')
+      ? (order.material as any).name
+      : 'S/M';
+    const isReady = order.status === 'ready' || order.done_pieces >= order.total_pieces;
+    const orderNum = order.id_order ?? order.id; // company number takes priority
+
+    return `
               <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300">
                 <div class="flex justify-between items-start mb-6">
                   <div class="flex items-center gap-5">
-                    <h3 class="text-2xl font-black tracking-tighter text-[#0f172a]">Orden #${order.id}</h3>
+                    <h3 class="text-2xl font-black tracking-tighter text-[#0f172a]">Orden #${orderNum}</h3>
                     <div class="flex gap-2">
                       <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">${order.priority}</span>
                       <span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">${order.status}</span>
@@ -187,13 +188,13 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                 
                 <div class="mt-8 flex justify-end gap-3">
                     <button class="btn-cancel-order flex items-center gap-2 border-2 border-slate-100 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-red-200 hover:text-red-500 transition-all"
-                            data-id="${order.id}">
+                            data-id="${order.id}" data-order-num="${orderNum}">
                         <span>❌</span> Cancelar
                     </button>
                                       
                     ${isReady ? `
                         <button class="btn-finalize-order flex items-center gap-2 bg-emerald-500 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all animate-pulse"
-                                data-id="${order.id}">
+                                data-id="${order.id}" data-order-num="${orderNum}">
                             <span>✅</span> Finalizar Orden
                         </button>
                     ` : `
@@ -205,7 +206,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                 </div>
               </div>
             `;
-          }).join('') : `
+  }).join('') : `
             <div class="text-center py-20 bg-white rounded-[40px] border border-dashed border-slate-300">
               <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">No hay órdenes de producción activas</p>
             </div>
@@ -223,7 +224,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
     newOrderBtn.addEventListener('click', async () => {
       try {
         console.log("Abriendo modal de nueva orden...");
-        await openNewOrderModal(); 
+        await openNewOrderModal();
       } catch (error) {
         console.error("Error al abrir el modal de creación:", error);
       }
@@ -233,9 +234,9 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
   // Botones de Actualización (Cards)
   app.querySelectorAll('.btn-update-production').forEach(btn => {
     btn.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLButtonElement;
-        const index = Number(target.dataset.index);
-        openUpdateProductionModal(data.active_orders[index]);
+      const target = e.currentTarget as HTMLButtonElement;
+      const index = Number(target.dataset.index);
+      openUpdateProductionModal(data.active_orders[index]);
     });
   });
 
@@ -245,7 +246,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
       const target = e.currentTarget as HTMLButtonElement;
       const orderId = Number(target.dataset.id);
 
-      if (confirm(`¿Estás seguro de que querés borrar la Orden #${orderId}?`)) {
+      if (confirm(`¿Estás seguro de que querés borrar la Orden #${(target as any).dataset.orderNum || orderId}?`)) {
         try {
           target.disabled = true;
           target.innerText = 'Eliminando...';
@@ -259,53 +260,53 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
     });
   });
   app.querySelector('#btn-open-config')?.addEventListener('click', async () => {
-  try {
-    console.log("Cambiando a vista de Configuración...");
-    const { renderConfig } = await import('./configView');
-    renderConfig(app);
-  } catch (error) {
-    console.error("Error al cargar la configuración:", error);
-  }
-});
-app.querySelector('#btn-open-history')?.addEventListener('click', async () => {
-  const { renderHistory } = await import('./historyView');
-  renderHistory(app);
-});
-app.querySelector('#btn-go-stock')?.addEventListener('click', async () => {
+    try {
+      console.log("Cambiando a vista de Configuración...");
+      const { renderConfig } = await import('./configView');
+      renderConfig(app);
+    } catch (error) {
+      console.error("Error al cargar la configuración:", error);
+    }
+  });
+  app.querySelector('#btn-open-history')?.addEventListener('click', async () => {
+    const { renderHistory } = await import('./historyView');
+    renderHistory(app);
+  });
+  app.querySelector('#btn-go-stock')?.addEventListener('click', async () => {
     const { renderDashboard } = await import('./dashboardView');
     const { stockService } = await import('../api/stockServices');
-    const data = await stockService.getDashboard(); 
+    const data = await stockService.getDashboard();
     renderDashboard(data, app);
-});
+  });
 
-app.querySelector('#btn-logout')?.addEventListener('click', () => {
+  app.querySelector('#btn-logout')?.addEventListener('click', () => {
     if (confirm("¿Cerrar sesión?")) {
-        localStorage.removeItem('token'); 
-        window.location.reload(); 
+      localStorage.removeItem('token');
+      window.location.reload();
     }
-});
-app.querySelectorAll('.btn-finalize-order').forEach(btn => {
+  });
+  app.querySelectorAll('.btn-finalize-order').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-        const target = e.currentTarget as HTMLButtonElement;
-        const orderId = Number(target.dataset.id);
+      const target = e.currentTarget as HTMLButtonElement;
+      const orderId = Number(target.dataset.id);
 
-        if (confirm(`¿Confirmás que la Orden #${orderId} está lista para ser retirada?`)) {
-            try {
-                target.disabled = true;
-                target.innerText = 'Finalizando...';
-                
-                // Envía el estado de cierre al backend
-                await productionService.updateOrder(orderId, { status: 'completed' });
-                
-                // Refresco total para limpiar la vista de activos
-                const freshData = await productionService.getProductionDashboard();
-                renderProduction(app, freshData);
-            } catch (error) {
-                alert("Error al finalizar la orden");
-                target.disabled = false;
-                target.innerHTML = '<span>✅</span> Finalizar Orden';
-            }
+      if (confirm(`¿Confirmás que la Orden #${(target as any).dataset.orderNum || orderId} está lista para ser retirada?`)) {
+        try {
+          target.disabled = true;
+          target.innerText = 'Finalizando...';
+
+          // Envía el estado de cierre al backend
+          await productionService.updateOrder(orderId, { status: 'completed' });
+
+          // Refresco total para limpiar la vista de activos
+          const freshData = await productionService.getProductionDashboard();
+          renderProduction(app, freshData);
+        } catch (error) {
+          alert("Error al finalizar la orden");
+          target.disabled = false;
+          target.innerHTML = '<span>✅</span> Finalizar Orden';
         }
+      }
     });
-});
+  });
 };

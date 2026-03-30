@@ -88,7 +88,7 @@ export const renderHistory = async (app: HTMLDivElement) => {
     const filterTo = (app.querySelector('#filter-date-to') as HTMLInputElement).value;
 
     const filtered = allOrders.filter((o: any) => {
-      const matchId = filterId ? o.id.toString().includes(filterId) : true;
+      const matchId = filterId ? String(o.id_order ?? o.id).includes(filterId) : true;
       const matchClient = filterClient ? o.client_name.toLowerCase().includes(filterClient) : true;
       const matchStatus = filterStatus ? o.status === filterStatus : true;
       const orderDate = new Date(o.created_at).toISOString().split('T')[0];
@@ -104,7 +104,7 @@ export const renderHistory = async (app: HTMLDivElement) => {
 
     tableBody.innerHTML = filtered.map((o: any) => `
       <tr class="order-row hover:bg-blue-50/40 transition-all cursor-pointer group" data-id="${o.id}">
-        <td class="px-8 py-4 font-black text-slate-700 group-hover:text-blue-600">#${o.id}</td>
+        <td class="px-8 py-4 font-black text-slate-700 group-hover:text-blue-600">#${o.id_order ?? o.id}</td>
         <td class="px-8 py-4 font-bold text-slate-600">${o.client_name}</td>
         <td class="px-8 py-4 text-xs font-bold text-slate-400">${new Date(o.created_at).toLocaleDateString()}</td>
         <td class="px-8 py-4">

@@ -45,7 +45,7 @@ export const openUpdateProductionModal = async (
     <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
       <div class="p-8 border-b border-slate-100 bg-slate-50/50">
         <h2 class="text-xl font-black text-[#0f172a] uppercase tracking-tighter">Actualizar Producción</h2>
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Orden #${order.id} • ${order.client_name}</p>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Orden #${order.id_order ?? order.id} • ${order.client_name}</p>
       </div>
 
       <div class="p-8 space-y-6">
@@ -67,6 +67,21 @@ export const openUpdateProductionModal = async (
                     `).join('')}
                 </select>
             </div>
+        </div>
+
+        <div class="px-2">
+          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Precio / Presupuesto ($)</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">$</span>
+            <input
+              type="number"
+              id="update-price"
+              step="0.01"
+              min="0"
+              value="${order.price ?? 0}"
+              class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-8 pr-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            >
+          </div>
         </div>
 
         <div class="relative">
@@ -156,12 +171,14 @@ export const openUpdateProductionModal = async (
       const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
 
       // 4. ARMAR PAYLOAD FINAL
+      const priceRaw = (modal.querySelector('#update-price') as HTMLInputElement).value;
       const updateData: UpdateOrderDTO = {
         items: updatedItems,
         done_pieces: totalDone,
         material_id: materialId,
         machine_id: machineId,
-        notes: finalNotes // <--- ACÁ PASAMOS LA BITÁCORA COMBINADA
+        notes: finalNotes,
+        price: priceRaw !== '' ? Number(priceRaw) : undefined,
       };
 
       try {
@@ -228,12 +245,6 @@ export const openNewOrderModal = async () => {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <div class="relative">
-            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Material</label>
-            <input type="text" id="mat-search" placeholder="Escribí para buscar..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
-            <input type="hidden" name="material_id" id="mat-id-hidden" required>
-            <div id="mat-results" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 shadow-xl rounded-2xl max-h-40 overflow-y-auto z-50 p-2 custom-scrollbar"></div>
-          </div>
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Prioridad</label>
             <select name="priority" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
@@ -242,9 +253,13 @@ export const openNewOrderModal = async () => {
               <option value="P1">P1 - Crítica 🔥</option>
             </select>
           </div>
+          <div>
+            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Precio ($)</label>
+            <input type="number" name="price" step="0.01" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+          </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Horas Est.</label>
             <input type="number" name="estimated_hours" value="0" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
@@ -253,29 +268,54 @@ export const openNewOrderModal = async () => {
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Mins Est.</label>
             <input type="number" name="estimated_minutes_form" value="0" min="0" max="59" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
           </div>
-          <div>
-            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Precio ($)</label>
-            <input type="number" name="price" step="0.01" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+        </div>
+
+        <div class="bg-slate-50/60 rounded-[20px] border border-slate-100 p-4">
+          <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-3">⚙️ Material y Máquina por defecto <span class="font-normal normal-case text-slate-300">(se aplica a todas las piezas sin asignación propia)</span></p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+              <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1.5">Material por defecto</label>
+              <input type="text" id="mat-search" placeholder="Buscar material..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none">
+              <input type="hidden" name="material_id" id="mat-id-hidden">
+              <div id="mat-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-100 shadow-xl rounded-xl max-h-36 overflow-y-auto z-50 p-1.5 custom-scrollbar"></div>
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1.5">Máquina por defecto</label>
+              <select id="default-machine-id" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none cursor-pointer">
+                <option value="">Sin asignar</option>
+                ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div>
-            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Asignar Máquina</label>
-            <select name="machine_id" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
-                <option value="">Pendiente de asignación</option>
-                ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
-            </select>
-        </div>
-
-        <div class="space-y-4 pt-2">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Piezas / STLs</label>
-            <button type="button" id="add-item-row" class="text-[9px] font-black bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full uppercase hover:bg-blue-100 transition-colors">+ Añadir Fila</button>
+        <div class="space-y-3 pt-2">
+          <div class="flex justify-between items-center pb-2">
+            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">🖨️ Piezas / STLs</label>
+            <button type="button" id="add-item-row" class="text-[9px] font-black bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full uppercase hover:bg-blue-100 transition-colors">+ Añadir Pieza</button>
           </div>
           <div id="items-container" class="space-y-3">
-            <div class="item-row flex gap-3">
-              <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required>
-              <input type="number" placeholder="Cant." class="item-qty w-24 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required min="1">
+            <div class="item-row bg-slate-50 border border-slate-100 rounded-[20px] p-4 space-y-3">
+              <div class="flex gap-3 items-center">
+                <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
+                <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="relative">
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
+                  <select class="item-material-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
+                    <option value="">↑ Usar material por defecto</option>
+                    ${materials.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Máquina específica</label>
+                  <select class="item-machine-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
+                    <option value="">↑ Usar máquina por defecto</option>
+                    ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('')}
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -328,16 +368,41 @@ export const openNewOrderModal = async () => {
         }
     });
 
+    // Helper: build a new item row HTML
+    const buildItemRowHTML = (mats: any[], macs: any[]) => {
+        const matOptions = mats.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('');
+        const macOptions = macs.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('');
+        return `
+            <div class="flex gap-3 items-center">
+                <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
+                <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
+                <button type="button" class="remove-row text-slate-300 hover:text-red-500 font-black text-lg leading-none px-1 flex-shrink-0">✕</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="relative">
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
+                    <select class="item-material-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
+                        <option value="">↑ Usar material por defecto</option>
+                        ${matOptions}
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Máquina específica</label>
+                    <select class="item-machine-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
+                        <option value="">↑ Usar máquina por defecto</option>
+                        ${macOptions}
+                    </select>
+                </div>
+            </div>
+        `;
+    };
+
     // Filas Dinámicas
     const container = modal.querySelector('#items-container')!;
     modal.querySelector('#add-item-row')?.addEventListener('click', () => {
         const row = document.createElement('div');
-        row.className = 'item-row flex gap-3 animate-in slide-in-from-right-2';
-        row.innerHTML = `
-            <input type="text" placeholder="Nombre STL" class="item-name flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required>
-            <input type="number" placeholder="Cant." class="item-qty w-24 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold outline-none" required min="1">
-            <button type="button" class="remove-row text-slate-300 hover:text-red-500 font-bold px-2">✕</button>
-        `;
+        row.className = 'item-row bg-slate-50 border border-slate-100 rounded-[20px] p-4 space-y-3 animate-in slide-in-from-bottom-2 duration-200';
+        row.innerHTML = buildItemRowHTML(materials, machines);
         row.querySelector('.remove-row')?.addEventListener('click', () => row.remove());
         container.appendChild(row);
     });
@@ -347,18 +412,29 @@ export const openNewOrderModal = async () => {
         e.preventDefault();
         const btn = modal.querySelector('#btn-submit-new') as HTMLButtonElement;
         
-        if(!matHidden.value) { alert("Por favor seleccioná un material de la lista"); return; }
+        // material_id is optional when every item has its own
+        const allItemsHaveMaterial = Array.from(modal.querySelectorAll('.item-material-id')).every((s: any) => s.value !== '');
+        if (!matHidden.value && !allItemsHaveMaterial) {
+            alert("Seleccioná un material por defecto, o asignale uno a cada pieza.");
+            return;
+        }
 
         btn.disabled = true; btn.innerText = 'PROCESANDO...';
 
         const fd = new FormData(form);
-        const mId = fd.get('machine_id');
+        const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
 
-        const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => ({
-            product_name: row.querySelector('.item-name').value,
-            quantity: Number(row.querySelector('.item-qty').value),
-            done_pieces: 0
-        }));
+        const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
+            const itemMatVal  = row.querySelector('.item-material-id')?.value;
+            const itemMacVal  = row.querySelector('.item-machine-id')?.value;
+            return {
+                product_name: row.querySelector('.item-name').value,
+                quantity:     Number(row.querySelector('.item-qty').value),
+                done_pieces:  0,
+                material_id:  itemMatVal  ? Number(itemMatVal)  : undefined,
+                machine_id:   itemMacVal  ? Number(itemMacVal)  : undefined,
+            };
+        });
 
         const { user_id } = getUserFromToken();
         const hours = Number(fd.get('estimated_hours') || 0);
@@ -374,7 +450,7 @@ export const openNewOrderModal = async () => {
             estimated_minutes: hours * 60 + mins,
             deadline: String(fd.get('deadline')),
             operator_id: user_id || 1,
-            machine_id: mId ? Number(mId) : undefined,
+            machine_id: defaultMachineId ? Number(defaultMachineId) : undefined,
             price: Number(fd.get('price') || 0)
         };
 
@@ -431,7 +507,7 @@ export const openOrderDetailModal = (
         <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-3xl font-black text-[#0f172a] tracking-tighter">ORDEN #${order.id}</h2>
+                    <h2 class="text-3xl font-black text-[#0f172a] tracking-tighter">ORDEN #${order.id_order ?? order.id}</h2>
                     <span class="px-3 py-1 rounded-lg text-[10px] font-black ${priorityColor}">${order.priority}</span>
                 </div>
                 <p class="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">${order.client_name}</p>

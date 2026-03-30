@@ -21,7 +21,8 @@ export interface OrderItem {
 }
 
 export interface ProductionOrder {
-    id: number;
+    id: number;        // DB auto-increment primary key
+    id_order?: number; // Company's manual order number (e.g. 24)
     created_at: string;
     updated_at: string;
     client_name: string;
@@ -55,6 +56,8 @@ export interface CreateOrderItemDTO {
     product_name: string;
     quantity: number;
     done_pieces?: number;
+    material_id?: number; // overrides order-level default
+    machine_id?: number;  // overrides order-level default
 }
 
 export interface CreateOrderDTO {
