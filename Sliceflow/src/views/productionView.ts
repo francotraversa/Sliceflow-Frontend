@@ -140,14 +140,31 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                     <thead>
                       <tr class="bg-slate-50 border-b border-slate-100">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pieza / STL</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Máquina</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Progreso</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cantidad</th>
                       </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-50">
-                       ${order.items && order.items.length > 0 ? order.items.map(item => `
+                     <tbody class="divide-y divide-slate-50">
+                       ${order.items && order.items.length > 0 ? order.items.map(item => {
+                         const itemMat = (item as any).material?.name
+                           || ((item as any).material_id ? `#${(item as any).material_id}` : null);
+                         const itemMac = (item as any).machine?.name
+                           || ((item as any).machine_id ? (data.machines?.find((m:any) => m.id === (item as any).machine_id)?.name || `ID:${(item as any).machine_id}`) : null);
+                         return `
                         <tr>
                           <td class="px-6 py-4 font-bold text-slate-700">${(item as any).stl_name || (item as any).product_name || '—'}</td>
+                          <td class="px-6 py-4">
+                            ${itemMat
+                              ? `<span class="bg-blue-50 text-blue-600 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide">${itemMat}</span>`
+                              : `<span class="text-slate-300 text-[10px] font-black">S/M</span>`}
+                          </td>
+                          <td class="px-6 py-4">
+                            ${itemMac
+                              ? `<span class="bg-slate-100 text-slate-600 text-[9px] font-black px-2.5 py-1 rounded-full">${itemMac}</span>`
+                              : `<span class="text-slate-300 text-[10px] font-black">S/A</span>`}
+                          </td>
                           <td class="px-6 py-4">
                             <div class="flex items-center justify-center gap-3">
                                <span class="text-[11px] font-black text-slate-400 min-w-[45px]">${item.done_pieces} / ${item.quantity}</span>
@@ -157,9 +174,9 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                             </div>
                           </td>
                           <td class="px-6 py-4 text-right font-black text-slate-900">${item.quantity} pcs</td>
-                        </tr>
-                      `).join('') : '<tr><td colspan="3" class="px-6 py-4 text-center text-slate-400">Sin items registrados</td></tr>'}
-                    </tbody>
+                        </tr>`;
+                       }).join('') : '<tr><td colspan="5" class="px-6 py-4 text-center text-slate-400">Sin items registrados</td></tr>'}
+                     </tbody>
                   </table>
                 </div>
 
