@@ -3,17 +3,7 @@ import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDT
 import { renderProduction } from './productionView';
 import { getUserFromToken } from '../api/authServices';
 
-// --- UTILIDAD: BUSCAR NOMBRES ---
-const getMaterialName = (id: number, materials: any[]) => {
-  const m = materials.find(mat => mat.id === id);
-  return m ? m.name : `Material #${id}`;
-};
 
-const getMachineName = (id: number | undefined, machines: any[]) => {
-  if (!id) return 'No asignada';
-  const mac = machines.find(m => m.id === id);
-  return mac ? mac.name : `Máquina #${id}`;
-};
 
 // --- MODAL 1: ACTUALIZAR PROGRESO DE PRODUCCIÓN ---
 export const openUpdateProductionModal = async (
@@ -318,13 +308,21 @@ export const openNewOrderModal = async () => {
                 <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
               </div>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-5 gap-2">
                 <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                   <div class="relative">
                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
                     <input type="number" step="0.01" min="0" value="0" class="item-price w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                   </div>
+                </div>
+                <div>
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Peso gr/ml</label>
+                  <input type="number" step="0.1" min="0" placeholder="0" class="item-weight w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                </div>
+                <div>
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo (min)</label>
+                  <input type="number" min="0" placeholder="0" class="item-time w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
@@ -402,13 +400,21 @@ export const openNewOrderModal = async () => {
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
                 <button type="button" class="remove-row text-slate-300 hover:text-red-500 font-black text-lg leading-none px-1 flex-shrink-0">✕</button>
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-5 gap-2">
                 <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                     <div class="relative">
                         <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
                         <input type="number" step="0.01" min="0" value="0" class="item-price w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                     </div>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Peso gr/ml</label>
+                    <input type="number" step="0.1" min="0" placeholder="0" class="item-weight w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                </div>
+                <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo (min)</label>
+                    <input type="number" min="0" placeholder="0" class="item-time w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
@@ -461,11 +467,15 @@ export const openNewOrderModal = async () => {
       const itemMatVal = (row.querySelector('.item-material-id') as HTMLSelectElement)?.value;
       const itemMacVal = (row.querySelector('.item-machine-id') as HTMLSelectElement)?.value;
       const itemPrice  = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
+      const itemWeight = (row.querySelector('.item-weight') as HTMLInputElement)?.value;
+      const itemTime   = (row.querySelector('.item-time') as HTMLInputElement)?.value;
       return {
         stl_name:    row.querySelector('.item-name').value,
         quantity:    Number(row.querySelector('.item-qty').value),
         done_pieces: 0,
         price:       Number(itemPrice),
+        weight:      itemWeight ? Number(itemWeight) : undefined,
+        time:        itemTime   ? Number(itemTime)   : undefined,
         // fall back to order-level default if no item-specific value
         material_id: itemMatVal ? Number(itemMatVal) : defaultMaterialId,
         machine_id:  itemMacVal ? Number(itemMacVal) : defaultMacNum,
@@ -507,8 +517,6 @@ export const openOrderDetailModal = (
   materials: any[] = [],
   machines: any[] = []
 ) => {
-  const materialName = getMaterialName(order.material_id, materials);
-  const machineName = getMachineName(order.machine_id, machines);
 
   // Lógica para el sello de finalización
   let finishBadge = '';
@@ -559,11 +567,24 @@ export const openOrderDetailModal = (
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Recursos Asignados</label>
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 space-y-3">
-                        <p class="text-xs"><b>Material:</b> <span class="text-slate-900 font-bold">${materialName}</span></p>
-                        <p class="text-xs"><b>Máquina:</b> <span class="text-slate-900 font-bold">${machineName}</span></p>
-                        <p class="text-xs font-medium text-slate-400">Operador ID: #${order.operator_id}</p>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Recursos por Pieza</label>
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 space-y-2 max-h-[200px] overflow-y-auto">
+                        ${order.items.map(item => {
+                          const iMat = (item as any).material?.name
+                            || (item.material_id ? (materials.find((m) => m.id === item.material_id)?.name || '#' + item.material_id) : null);
+                          const iMac = (item as any).machine?.name
+                            || (item.machine_id ? (machines.find((m) => m.id === item.machine_id)?.name || '#' + item.machine_id) : null);
+                          const iName = item.stl_name || (item as any).product_name || '—';
+                          return `
+                          <div class="bg-white rounded-2xl px-3 py-2.5 border border-slate-100">
+                            <p class="text-xs font-black text-slate-700 mb-1">${iName}</p>
+                            <div class="flex gap-2 flex-wrap">
+                              ${iMat ? '<span class="bg-blue-50 text-blue-600 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">' + iMat + '</span>' : ''}
+                              ${iMac ? '<span class="bg-indigo-50 text-indigo-600 text-[8px] font-black px-2 py-0.5 rounded-full">' + iMac + '</span>' : ''}
+                              ${!iMat && !iMac ? '<span class="text-slate-300 text-[8px] font-black">Sin recursos asignados</span>' : ''}
+                            </div>
+                          </div>`;}).join('')}
+                        <p class="text-xs font-medium text-slate-400 mt-2">Operador ID: #${order.operator_id}</p>
                     </div>
                 </div>
             </div>
@@ -575,7 +596,7 @@ export const openOrderDetailModal = (
                         ${order.items.map(item => `
                             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                                 <div>
-                                    <p class="text-sm font-black text-slate-700">${item.stl_name}</p>
+                                    <p class="text-sm font-black text-slate-700">${item.stl_name || (item as any).product_name || '—'}</p>
                                     <p class="text-[10px] text-slate-400 font-bold uppercase">Meta: ${item.quantity} unidades</p>
                                 </div>
                                 <div class="text-right">
@@ -597,7 +618,7 @@ export const openOrderDetailModal = (
         <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
             <div class="text-2xl font-black text-slate-900">
                 <span class="text-[10px] text-slate-400 uppercase block leading-none">Presupuesto Final</span>
-                $${(order.price || 0).toLocaleString()}
+                $${((order as any).total_price ?? (order as any).price ?? 0).toLocaleString()}
             </div>
             <div class="flex gap-3">
                 <button id="btn-print-ticket" class="bg-[#0f172a] text-white px-8 py-4 rounded-2xl text-xs font-black uppercase hover:bg-black transition-all shadow-lg active:scale-95">
@@ -609,4 +630,227 @@ export const openOrderDetailModal = (
 
   document.body.appendChild(modal);
   modal.querySelector('#close-detail')?.addEventListener('click', () => modal.remove());
+
+  modal.querySelector('#btn-print-ticket')?.addEventListener('click', () => {
+    const orderNum  = order.id_order ?? order.id;
+    const totalPrice = ((order as any).total_price ?? (order as any).price ?? 0).toLocaleString();
+    const createdAt = new Date(order.created_at).toLocaleDateString();
+    const deadline  = order.deadline ? new Date(order.deadline).toLocaleDateString() : '___________';
+
+    // Build one table row per item
+    const itemRows = (order.items ?? []).map(item => {
+      const iMat = (item as any).material?.name
+        || (item.material_id ? materials.find((m: any) => m.id === item.material_id)?.name || '' : '');
+      const iMac = (item as any).machine?.name
+        || (item.machine_id ? machines.find((m: any) => m.id === item.machine_id)?.name || '' : '');
+      const name  = item.stl_name || (item as any).product_name || '';
+      return `
+        <tr>
+          <td>${iMac}</td>
+          <td>${name}</td>
+          <td></td>
+          <td>${iMat}</td>
+          <td></td>
+          <td>${item.quantity}</td>
+          <td>${item.done_pieces}</td>
+        </tr>`;
+    });
+
+    // Add extra blank rows (minimum 8 rows visible)
+    const extraRows = Math.max(0, 8 - itemRows.length);
+    for (let i = 0; i < extraRows; i++) {
+      itemRows.push('<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>');
+    }
+
+    const win = window.open('', '_blank', 'width=680,height=960');
+    if (!win) return;
+
+    win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Orden #${orderNum} — Hornero 3DX</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #000;
+      background: #fff;
+      padding: 12mm;
+    }
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand-name { font-size: 13px; font-weight: 900; line-height: 1.1; }
+    .brand-sub  { font-size: 9px; color: #555; }
+    .title      { font-size: 18px; font-weight: 700; text-align: center; flex: 1; }
+    .id-block   { font-size: 11px; white-space: nowrap; }
+    .id-block span { border-bottom: 1px solid #000; display: inline-block; width: 80px; }
+
+    /* ── Section headers ── */
+    .section-header {
+      background: #333;
+      color: #fff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 10px;
+      padding: 4px 0;
+      margin-top: 6px;
+      border-radius: 3px 3px 0 0;
+    }
+    .section-body {
+      border: 1px solid #555;
+      border-top: none;
+      padding: 6px 8px;
+      border-radius: 0 0 3px 3px;
+    }
+
+    /* ── Fields ── */
+    .row-fields {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 5px;
+    }
+    .field {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      flex: 1;
+    }
+    .field label { font-weight: 700; white-space: nowrap; }
+    .field .line {
+      flex: 1;
+      border-bottom: 1px solid #000;
+      min-width: 60px;
+      height: 14px;
+    }
+    .field .value {
+      font-size: 10px;
+      flex: 1;
+      border-bottom: 1px solid #000;
+      min-width: 60px;
+      height: 14px;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 1px;
+    }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 3px 4px;
+      text-align: center;
+      font-size: 9px;
+    }
+    th {
+      background: #eee;
+      font-weight: 700;
+      font-size: 8.5px;
+    }
+    td:nth-child(2) { text-align: left; } /* Gcode */
+
+    /* ── Footer sections ── */
+    .footer-grid {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .footer-grid .field { flex: 1; }
+
+    /* ── Total ── */
+    .total-line {
+      margin-top: 8px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    @media print {
+      body { padding: 8mm; }
+      @page { margin: 5mm; size: A5; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div>
+        <div class="brand-name">HORNERO<br>3DX</div>
+      </div>
+    </div>
+    <div class="title">Servicio de impresión 3D</div>
+    <div class="id-block">ID: <span>#${orderNum}</span></div>
+  </div>
+
+  <!-- Información del cliente -->
+  <div class="section-header">Información del cliente</div>
+  <div class="section-body">
+    <div class="row-fields">
+      <div class="field"><label>Nombre:</label><div class="line"></div></div>
+      <div class="field"><label>Empresa:</label><div class="value">${order.client_name}</div></div>
+    </div>
+    <div class="row-fields">
+      <div class="field"><label>Fecha de inicio:</label><div class="value">${createdAt}</div></div>
+      <div class="field"><label>Fecha de entrega acordada:</label><div class="value">${deadline}</div></div>
+    </div>
+  </div>
+
+  <!-- Impresión 3D -->
+  <div class="section-header">Impresión 3D</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Impresora</th>
+        <th>Gcode</th>
+        <th>Tiempo</th>
+        <th>Material/Color</th>
+        <th>gr/ml</th>
+        <th>Cant.</th>
+        <th>Realizadas</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRows.join('')}
+    </tbody>
+  </table>
+
+  <!-- Para postprocesar -->
+  <div class="section-header">Para postprocesar</div>
+  <div class="section-body">
+    <div class="row-fields">
+      <div class="field" style="max-width:160px"><label>Piezas en caja PP:</label><div class="line"></div></div>
+      <div class="field"><label>Info adicional:</label><div class="line"></div></div>
+    </div>
+  </div>
+
+  <!-- Control de calidad -->
+  <div class="section-header">Control de calidad y para embalar</div>
+  <div class="section-body">
+    <div class="row-fields">
+      <div class="field" style="max-width:160px"><label>Piezas en caja CC:</label><div class="line"></div></div>
+      <div class="field" style="max-width:160px"><label>Aprobado por:</label><div class="line"></div></div>
+      <div class="field"><label>Firma:</label><div class="line"></div></div>
+    </div>
+  </div>
+
+  <div class="total-line">Total: $${totalPrice}</div>
+
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`);
+    win.document.close();
+  });
 };

@@ -20,8 +20,12 @@ export interface OrderItem {
     quantity: number;
     done_pieces: number;
     price?: number;        // per-item price
+    weight?: number;       // gr/ml consumed
+    time?: number;         // estimated print time in minutes for this item
     material_id?: number;
     machine_id?: number;
+    material?: { id: number; name: string };
+    machine?: { id: number; name: string };
 }
 
 export interface ProductionOrder {
@@ -62,8 +66,10 @@ export interface CreateOrderItemDTO {
     quantity: number;
     done_pieces?: number;
     price: number;         // backend sums per-item prices into TotalPrice
-    material_id?: number;  // overrides order-level default
-    machine_id?: number;   // overrides order-level default
+    weight?: number;       // gr/ml — shown on ticket as gr/ml column
+    time?: number;         // print time minutes for this item
+    material_id?: number;
+    machine_id?: number;
 }
 
 export interface CreateOrderDTO {
@@ -100,6 +106,8 @@ export interface UpdateOrderItemDTO {
     quantity: number;
     done_pieces: number;
     price: number;         // backend computes TotalPrice = sum of item prices
+    weight?: number;       // gr/ml consumed
+    time?: number;         // print time in minutes for this item
     material_id?: number;  // triggers machine status update on backend
     machine_id?: number;   // triggers machine release/assign on backend
 }

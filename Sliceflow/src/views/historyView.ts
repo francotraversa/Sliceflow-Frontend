@@ -98,7 +98,11 @@ export const renderHistory = async (app: HTMLDivElement) => {
       return matchId && matchClient && matchStatus && matchFrom && matchTo;
     });
 
-    const totalRevenue = filtered.reduce((sum: number, o: any) => sum + (o.price || 0), 0);
+    const totalRevenue = filtered.reduce((sum: number, o: any) => {
+      const p = o.total_price ?? o.price
+        ?? (o.items?.reduce((s: number, i: any) => s + (i.price || 0), 0) || 0);
+      return sum + p;
+    }, 0);
     statsCount.textContent = filtered.length.toString();
     statsRevenue.textContent = `$${totalRevenue.toLocaleString()}`;
 
@@ -115,7 +119,7 @@ export const renderHistory = async (app: HTMLDivElement) => {
             ${o.status}
           </span>
         </td>
-        <td class="px-8 py-4 text-right font-black text-slate-900">$${(o.price || 0).toLocaleString()}</td>
+        <td class="px-8 py-4 text-right font-black text-slate-900">$${((o.total_price ?? o.price ?? o.items?.reduce((s: number, i: any) => s + (i.price || 0), 0) ?? 0)).toLocaleString()}</td>
       </tr>
     `).join('');
 
