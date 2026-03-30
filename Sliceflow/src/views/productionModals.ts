@@ -1,6 +1,7 @@
 import { productionService } from '../api/productionServices';
-import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO } from '../types/production';
+import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO, UpdateOrderItemDTO } from '../types/production';
 import { renderProduction } from './productionView';
+import { getUserFromToken } from '../api/authServices';
 
 // --- UTILIDAD: BUSCAR NOMBRES ---
 const getMaterialName = (id: number, materials: any[]) => {
@@ -8,7 +9,7 @@ const getMaterialName = (id: number, materials: any[]) => {
   return m ? m.name : `Material #${id}`;
 };
 
-const getMachineName = (id: number, machines: any[]) => {
+const getMachineName = (id: number | undefined, machines: any[]) => {
   if (!id) return 'No asignada';
   const mac = machines.find(m => m.id === id);
   return mac ? mac.name : `Máquina #${id}`;
@@ -145,11 +146,10 @@ export const openUpdateProductionModal = async (
       saveBtn.innerText = 'GUARDANDO...';
 
       // 3. CAPTURAR ITEMS
-      const updatedItems = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
+      const updatedItems: UpdateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
         id: Number(input.dataset.itemId),
         product_name: input.dataset.productName,
         quantity: Number(input.dataset.totalQty),
-        notes: finalNotes,
         done_pieces: Number(input.value),
       }));
 
@@ -360,17 +360,20 @@ export const openNewOrderModal = async () => {
             done_pieces: 0
         }));
 
+        const { user_id } = getUserFromToken();
+        const hours = Number(fd.get('estimated_hours') || 0);
+        const mins  = Number(fd.get('estimated_minutes_form') || 0);
+
         const payload: CreateOrderDTO = {
             id: Number(fd.get('id')),
             client_name: String(fd.get('client_name')),
-            items: items, 
+            items: items,
             material_id: Number(fd.get('material_id')),
             priority: String(fd.get('priority')),
             notes: String(fd.get('notes') || ""),
-            estimated_hours: Number(fd.get('estimated_hours')),
-            estimated_minutes: Number(fd.get('estimated_minutes_form')),
+            estimated_minutes: hours * 60 + mins,
             deadline: String(fd.get('deadline')),
-            operator_id: 1, 
+            operator_id: user_id || 1,
             machine_id: mId ? Number(mId) : undefined,
             price: Number(fd.get('price') || 0)
         };
