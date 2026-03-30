@@ -153,9 +153,14 @@ export const openUpdateProductionModal = async (
   }
 
       // 2. CAPTURAR MATERIAL Y MÁQUINA
-      const materialId = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
-      const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
-      const machineId = machineIdRaw === "0" ? null : Number(machineIdRaw);
+      const materialIdRaw = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
+      const machineIdRaw  = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
+
+      // Guard: never send 0 as material — backend will reject it
+      const materialId = materialIdRaw > 0 ? materialIdRaw : undefined;
+      // 0 = "Sin asignar" → send null to unassign; otherwise send the id
+      const machineId: number | null | undefined =
+        machineIdRaw === '0' ? null : machineIdRaw ? Number(machineIdRaw) : undefined;
 
       saveBtn.disabled = true;
       saveBtn.innerText = 'GUARDANDO...';
