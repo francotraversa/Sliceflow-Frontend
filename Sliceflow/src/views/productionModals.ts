@@ -574,7 +574,7 @@ export const openOrderDetailModal = (
                             || (item.material_id ? (materials.find((m) => m.id === item.material_id)?.name || '#' + item.material_id) : null);
                           const iMac = (item as any).machine?.name
                             || (item.machine_id ? (machines.find((m) => m.id === item.machine_id)?.name || '#' + item.machine_id) : null);
-                          const iName = item.stl_name || (item as any).product_name || '—';
+                          const iName = item.stl_name || (item as any).StlName || (item as any).product_name || '—';
                           return `
                           <div class="bg-white rounded-2xl px-3 py-2.5 border border-slate-100">
                             <p class="text-xs font-black text-slate-700 mb-1">${iName}</p>
@@ -596,7 +596,7 @@ export const openOrderDetailModal = (
                         ${order.items.map(item => `
                             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                                 <div>
-                                    <p class="text-sm font-black text-slate-700">${item.stl_name || (item as any).product_name || '—'}</p>
+                                    <p class="text-sm font-black text-slate-700">${item.stl_name || (item as any).StlName || (item as any).product_name || '—'}</p>
                                     <p class="text-[10px] text-slate-400 font-bold uppercase">Meta: ${item.quantity} unidades</p>
                                 </div>
                                 <div class="text-right">
@@ -643,14 +643,14 @@ export const openOrderDetailModal = (
         || (item.material_id ? materials.find((m: any) => m.id === item.material_id)?.name || '' : '');
       const iMac = (item as any).machine?.name
         || (item.machine_id ? machines.find((m: any) => m.id === item.machine_id)?.name || '' : '');
-      const name  = item.stl_name || (item as any).product_name || '';
+      const name  = item.stl_name || (item as any).StlName || (item as any).product_name || '';
       return `
         <tr>
           <td>${iMac}</td>
           <td>${name}</td>
-          <td></td>
+          <td>${item.time || ''}</td>
           <td>${iMat}</td>
-          <td></td>
+          <td>${item.weight || ''}</td>
           <td>${item.quantity}</td>
           <td>${item.done_pieces}</td>
         </tr>`;
@@ -799,7 +799,7 @@ export const openOrderDetailModal = (
   <div class="section-header">Información del cliente</div>
   <div class="section-body">
     <div class="row-fields">
-      <div class="field"><label>Nombre:</label><div class="line"></div></div>
+      <div class="field"><label>Nombre:</label><input type="text" id="inp-nombre" placeholder="Escribir nombre..." style="flex:1;border:none;border-bottom:1px solid #000;font-size:10px;font-family:Arial;outline:none;padding:1px 3px;"></div>
       <div class="field"><label>Empresa:</label><div class="value">${order.client_name}</div></div>
     </div>
     <div class="row-fields">
@@ -848,7 +848,10 @@ export const openOrderDetailModal = (
 
   <div class="total-line">Total: $${totalPrice}</div>
 
-  <script>window.onload = () => window.print();<\/script>
+  <div style="margin-top:10px;text-align:right">
+    <button onclick="window.print()" style="background:#0f172a;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:11px;font-weight:900;cursor:pointer;letter-spacing:0.05em;">🖨️ Imprimir</button>
+  </div>
+  <style>@media print { button { display:none !important; } }</style>
 </body>
 </html>`);
     win.document.close();
