@@ -61,22 +61,21 @@ export interface CreateOrderItemDTO {
     stl_name: string;      // backend: StlName
     quantity: number;
     done_pieces?: number;
+    price: number;         // backend sums per-item prices into TotalPrice
     material_id?: number;  // overrides order-level default
     machine_id?: number;   // overrides order-level default
 }
 
 export interface CreateOrderDTO {
-    id?: number;           // Manual ID (e.g. 2026)
+    id?: number;           // Manual ID (company-specific order number)
     client_name: string;
     items: CreateOrderItemDTO[];
-    material_id: number;
-    machine_id?: number;
     priority: string;      // P1, P2, P3
     notes: string;
-    estimated_minutes: number; // total minutes (hours * 60 + mins)
-    deadline: string;          // "YYYY-MM-DD"
+    estimated_hours: number;    // backend: EstimatedHours (separate)
+    estimated_minutes: number;  // backend: EstimatedMinutes 0-59 (backend does hours*60+mins)
+    deadline: string;           // "YYYY-MM-DD"
     operator_id: number;
-    price?: number;
 }
 
 export interface UpdateOrderDTO {

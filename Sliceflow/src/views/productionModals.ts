@@ -73,7 +73,7 @@ export const openUpdateProductionModal = async (
           <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3 ml-1">Progreso y Configuración de Items</label>
           <div class="max-h-[340px] overflow-y-auto space-y-3 pr-1 custom-scrollbar text-left">
             ${order.items.map(item => `
-              <div class="rounded-[20px] border border-slate-100 bg-slate-50/40 p-4 space-y-3 group hover:border-blue-100 transition-colors">
+              <div class="item-update-row rounded-[20px] border border-slate-100 bg-slate-50/40 p-4 space-y-3 group hover:border-blue-100 transition-colors">
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="font-black text-slate-800 text-sm">${item.stl_name}</p>
@@ -179,7 +179,7 @@ export const openUpdateProductionModal = async (
     // 3. CAPTURAR ITEMS — cada row tiene: done_pieces, price, material_id, machine_id
     const itemRows = Array.from(modal.querySelectorAll('.item-progress-input'));
     const updatedItems: UpdateOrderItemDTO[] = itemRows.map((input: any) => {
-      const row     = input.closest('.rounded-\[20px\]') as HTMLElement;
+      const row     = input.closest('.item-update-row') as HTMLElement;
       const macVal  = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
       const matVal  = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
       const pricVal = (row?.querySelector('.item-price-input') as HTMLInputElement | null)?.value ?? '0';
@@ -268,8 +268,7 @@ export const openNewOrderModal = async () => {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
+        <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Prioridad</label>
             <select name="priority" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
               <option value="P3">P3 - Normal</option>
@@ -277,11 +276,6 @@ export const openNewOrderModal = async () => {
               <option value="P1">P1 - Crítica 🔥</option>
             </select>
           </div>
-          <div>
-            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Precio ($)</label>
-            <input type="number" name="price" step="0.01" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
-          </div>
-        </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -324,18 +318,25 @@ export const openNewOrderModal = async () => {
                 <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="relative">
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
+                  <div class="relative">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
+                    <input type="number" step="0.01" min="0" value="0" class="item-price w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                  </div>
+                </div>
+                <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
                   <select class="item-material-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
-                    <option value="">↑ Usar material por defecto</option>
+                    <option value="">↑ Por defecto</option>
                     ${materials.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
                   </select>
                 </div>
                 <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Máquina específica</label>
                   <select class="item-machine-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
-                    <option value="">↑ Usar máquina por defecto</option>
+                    <option value="">↑ Por defecto</option>
                     ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('')}
                   </select>
                 </div>
@@ -392,7 +393,6 @@ export const openNewOrderModal = async () => {
     }
   });
 
-  // Helper: build a new item row HTML
   const buildItemRowHTML = (mats: any[], macs: any[]) => {
     const matOptions = mats.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('');
     const macOptions = macs.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('');
@@ -402,18 +402,25 @@ export const openNewOrderModal = async () => {
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
                 <button type="button" class="remove-row text-slate-300 hover:text-red-500 font-black text-lg leading-none px-1 flex-shrink-0">✕</button>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="relative">
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
+                    <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
+                        <input type="number" step="0.01" min="0" value="0" class="item-price w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                    </div>
+                </div>
+                <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
                     <select class="item-material-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
-                        <option value="">↑ Usar material por defecto</option>
+                        <option value="">↑ Por defecto</option>
                         ${matOptions}
                     </select>
                 </div>
                 <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Máquina específica</label>
                     <select class="item-machine-id w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-bold outline-none cursor-pointer text-slate-600">
-                        <option value="">↑ Usar máquina por defecto</option>
+                        <option value="">↑ Por defecto</option>
                         ${macOptions}
                     </select>
                 </div>
@@ -446,36 +453,37 @@ export const openNewOrderModal = async () => {
     btn.disabled = true; btn.innerText = 'PROCESANDO...';
 
     const fd = new FormData(form);
-    const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
+    const defaultMaterialId = matHidden.value ? Number(matHidden.value) : undefined;
+    const defaultMachineId  = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
+    const defaultMacNum     = defaultMachineId ? Number(defaultMachineId) : undefined;
 
     const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
-      const itemMatVal = row.querySelector('.item-material-id')?.value;
-      const itemMacVal = row.querySelector('.item-machine-id')?.value;
+      const itemMatVal = (row.querySelector('.item-material-id') as HTMLSelectElement)?.value;
+      const itemMacVal = (row.querySelector('.item-machine-id') as HTMLSelectElement)?.value;
+      const itemPrice  = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
       return {
-        stl_name: row.querySelector('.item-name').value,
-        quantity: Number(row.querySelector('.item-qty').value),
+        stl_name:    row.querySelector('.item-name').value,
+        quantity:    Number(row.querySelector('.item-qty').value),
         done_pieces: 0,
-        material_id: itemMatVal ? Number(itemMatVal) : undefined,
-        machine_id: itemMacVal ? Number(itemMacVal) : undefined,
+        price:       Number(itemPrice),
+        // fall back to order-level default if no item-specific value
+        material_id: itemMatVal ? Number(itemMatVal) : defaultMaterialId,
+        machine_id:  itemMacVal ? Number(itemMacVal) : defaultMacNum,
       };
     });
 
     const { user_id } = getUserFromToken();
-    const hours = Number(fd.get('estimated_hours') || 0);
-    const mins = Number(fd.get('estimated_minutes_form') || 0);
 
     const payload: CreateOrderDTO = {
-      id: Number(fd.get('id')),
-      client_name: String(fd.get('client_name')),
-      items: items,
-      material_id: Number(fd.get('material_id')),
-      priority: String(fd.get('priority')),
-      notes: String(fd.get('notes') || ""),
-      estimated_minutes: hours * 60 + mins,
-      deadline: String(fd.get('deadline')),
-      operator_id: user_id || 1,
-      machine_id: defaultMachineId ? Number(defaultMachineId) : undefined,
-      price: Number(fd.get('price') || 0)
+      id:                Number(fd.get('id')),
+      client_name:       String(fd.get('client_name')),
+      items:             items,
+      priority:          String(fd.get('priority')),
+      notes:             String(fd.get('notes') || ''),
+      estimated_hours:   Number(fd.get('estimated_hours') || 0),
+      estimated_minutes: Number(fd.get('estimated_minutes_form') || 0), // 0-59, backend does the math
+      deadline:          String(fd.get('deadline')),
+      operator_id:       user_id || 1,
     };
 
     try {

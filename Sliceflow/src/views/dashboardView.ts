@@ -38,7 +38,7 @@ export const renderDashboard = (data: any, app: HTMLDivElement) => {
     <div class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">${role}</div>
   </div>
 
-  ${role.toLowerCase() === 'admin' ? `
+  ${(role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner') ? `
     <button id="btn-open-users" 
       class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
       Usuarios
@@ -70,8 +70,8 @@ export const renderDashboard = (data: any, app: HTMLDivElement) => {
           ${renderStatCard("Total Productos", data.total_items || 0, "Items activos", "📦", "#4391d4")}
           ${renderStatCard(
               "Valor Total Stock", 
-              role.toLowerCase() === 'admin' ? `$ ${data.total_value || 0}` : "••••••", 
-              role.toLowerCase() === 'admin' ? "Capital en USD" : "Acceso Restringido", 
+              (role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner') ? `$ ${data.total_value || 0}` : "••••••", 
+              (role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner') ? "Capital en USD" : "Acceso Restringido", 
               "U$D", 
               "#4391d4"
             )}
