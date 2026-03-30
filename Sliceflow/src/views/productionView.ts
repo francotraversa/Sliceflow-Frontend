@@ -45,7 +45,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
               <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Generado por I3D</span>
               <div class="p-2 bg-blue-50 rounded-lg text-blue-500 text-xs">🖨️</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${(data.revenue_fdm || 0).toLocaleString()}` : "••••••"}</h2>
+            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${((data.revenue_fdm || 0) || data.active_orders.reduce((s: number, o: any) => s + (o.total_price || o.price || 0), 0)).toLocaleString()}` : "••••••"}</h2>
           </div>
 
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
@@ -105,7 +105,17 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
 
     const materialName = (order.material && typeof order.material === 'object')
       ? (order.material as any).name
-      : 'S/M';
+      : (order.material_id ? `ID:${order.material_id}` : 'S/M');
+
+    // Machine: try order-level machine object, then match by id from dashboard machines list
+    const machineName = (() => {
+      const mid = order.machine_id;
+      if (!mid) return 'S/A';
+      if (order.machine && typeof order.machine === 'object') return (order.machine as any).name;
+      const found = data.machines?.find((m: any) => m.id === mid);
+      return found ? found.name : `ID:${mid}`;
+    })();
+
     const isReady = order.status === 'ready' || order.done_pieces >= order.total_pieces;
     const orderNum = order.id_order ?? order.id; // company number takes priority
 
@@ -135,9 +145,9 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                      ${order.items && order.items.length > 0 ? order.items.map(item => `
+                       ${order.items && order.items.length > 0 ? order.items.map(item => `
                         <tr>
-                          <td class="px-6 py-4 font-bold text-slate-700">${item.stl_name}</td>
+                          <td class="px-6 py-4 font-bold text-slate-700">${(item as any).stl_name || (item as any).product_name || '—'}</td>
                           <td class="px-6 py-4">
                             <div class="flex items-center justify-center gap-3">
                                <span class="text-[11px] font-black text-slate-400 min-w-[45px]">${item.done_pieces} / ${item.quantity}</span>
@@ -160,7 +170,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                   </div>
                   <div>
                     <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2">Máquina</p>
-                    <p class="text-lg font-black text-[#0f172a]">${order.machine_id || 'S/A'}</p>
+                    <p class="text-lg font-black text-[#0f172a]">${machineName}</p>
                   </div>
                   <div>
                     <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2">Ingreso</p>
