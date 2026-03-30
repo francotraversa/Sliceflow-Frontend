@@ -13,11 +13,15 @@ export interface Machine {
     status: string;
 }
 
+// Matches the backend OrderItem GORM model (stl_name JSON tag)
 export interface OrderItem {
     id: number;
-    product_name: string;
+    stl_name: string;      // backend: StlName json:"stl_name"
     quantity: number;
     done_pieces: number;
+    price?: number;        // per-item price
+    material_id?: number;
+    machine_id?: number;
 }
 
 export interface ProductionOrder {
@@ -40,7 +44,8 @@ export interface ProductionOrder {
     status: string; // pending, in-progress, ready, completed, cancelled
     done_pieces: number;
     operator_id: number;
-    price?: number;
+    price?: number;       // order-level price (read-only view, computed by backend)
+    total_price?: number; // backend: TotalPrice = sum of item prices
 }
 
 export interface ProductionDashboardResponse {
@@ -53,11 +58,11 @@ export interface ProductionDashboardResponse {
 }
 
 export interface CreateOrderItemDTO {
-    product_name: string;
+    stl_name: string;      // backend: StlName
     quantity: number;
     done_pieces?: number;
-    material_id?: number; // overrides order-level default
-    machine_id?: number;  // overrides order-level default
+    material_id?: number;  // overrides order-level default
+    machine_id?: number;   // overrides order-level default
 }
 
 export interface CreateOrderDTO {
@@ -81,18 +86,21 @@ export interface UpdateOrderDTO {
     priority?: string;
     notes?: string;
     status?: string;
-    price?: number;
     estimated_minutes?: number;
     deadline?: string;
     items?: UpdateOrderItemDTO[];
     operator_id?: number;
-    material_id?: number | null;
-    machine_id?: number | null;
+    material_id?: number | null;  // order-level default (if backend uses it)
+    machine_id?: number | null;   // order-level default (if backend uses it)
 }
 
+// Matches backend UpdateOrderItemDTO exactly
 export interface UpdateOrderItemDTO {
     id: number;
-    product_name: string;
+    stl_name: string;      // was product_name — backend uses StlName
     quantity: number;
     done_pieces: number;
+    price: number;         // backend computes TotalPrice = sum of item prices
+    material_id?: number;  // triggers machine status update on backend
+    machine_id?: number;   // triggers machine release/assign on backend
 }

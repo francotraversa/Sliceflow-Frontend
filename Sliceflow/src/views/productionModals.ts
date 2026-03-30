@@ -17,8 +17,8 @@ const getMachineName = (id: number | undefined, machines: any[]) => {
 
 // --- MODAL 1: ACTUALIZAR PROGRESO DE PRODUCCIÓN ---
 export const openUpdateProductionModal = async (
-  order: ProductionOrder, 
-  materials: any[] = [], 
+  order: ProductionOrder,
+  materials: any[] = [],
   machines: any[] = []
 ) => {
   // --- REFUERZO: Si las listas vienen vacías, las buscamos del servidor ---
@@ -40,7 +40,7 @@ export const openUpdateProductionModal = async (
 
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300';
-  
+
   modal.innerHTML = `
     <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
       <div class="p-8 border-b border-slate-100 bg-slate-50/50">
@@ -69,40 +69,51 @@ export const openUpdateProductionModal = async (
             </div>
         </div>
 
-        <div class="px-2">
-          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Precio / Presupuesto ($)</label>
-          <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">$</span>
-            <input
-              type="number"
-              id="update-price"
-              step="0.01"
-              min="0"
-              value="${order.price ?? 0}"
-              class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-8 pr-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            >
-          </div>
-        </div>
-
         <div class="relative">
-          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-4 ml-3">Progreso de Items</label>
-          <div class="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar text-left">
+          <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3 ml-1">Progreso y Configuración de Items</label>
+          <div class="max-h-[340px] overflow-y-auto space-y-3 pr-1 custom-scrollbar text-left">
             ${order.items.map(item => `
-              <div class="p-4 rounded-3xl border border-slate-100 flex items-center justify-between bg-slate-50/30 group hover:border-blue-200 transition-colors">
-                <div class="flex-1">
-                  <p class="font-black text-slate-700 text-sm">${item.product_name}</p>
-                  <p class="text-[10px] font-bold text-slate-400 uppercase">Meta: ${item.quantity} un.</p>
+              <div class="rounded-[20px] border border-slate-100 bg-slate-50/40 p-4 space-y-3 group hover:border-blue-100 transition-colors">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-black text-slate-800 text-sm">${item.stl_name}</p>
+                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Meta: ${item.quantity} un.</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[9px] font-black text-slate-300 uppercase">Hechas</span>
+                    <input type="number"
+                           class="item-progress-input w-18 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-400 outline-none w-[72px]"
+                           data-item-id="${item.id}"
+                           data-stl-name="${item.stl_name}"
+                           data-total-qty="${item.quantity}"
+                           value="${item.done_pieces}"
+                           min="0" max="${item.quantity}">
+                  </div>
                 </div>
-                <div class="flex items-center gap-4">
-                  <input type="number" 
-                         data-item-id="${item.id}"
-                         data-product-name="${item.product_name}"
-                         data-total-qty="${item.quantity}"
-                         value="${item.done_pieces}" 
-                         min="0" 
-                         max="${item.quantity}"
-                         class="item-progress-input w-20 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
+                    <div class="relative">
+                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
+                      <input type="number" step="0.01" min="0"
+                             class="item-price-input w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
+                             value="${item.price ?? 0}">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material</label>
+                    <select class="item-update-material w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer text-slate-600">
+                      <option value="">Sin cambio</option>
+                      ${finalMaterials.map((m: any) => `<option value="${m.id}" ${m.id === item.material_id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Máquina</label>
+                    <select class="item-update-machine w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer text-slate-600">
+                      <option value="0">Sin asignar</option>
+                      ${finalMachines.map((m: any) => `<option value="${m.id}" ${m.id === item.machine_id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
+                  </div>
                 </div>
               </div>
             `).join('')}
@@ -130,99 +141,107 @@ export const openUpdateProductionModal = async (
   `;
 
   document.body.appendChild(modal);
-  
+
   // Eventos de botones
   modal.querySelector('#close-modal-update')?.addEventListener('click', () => modal.remove());
 
   modal.querySelector('#save-production')?.addEventListener('click', async () => {
-      const saveBtn = modal.querySelector('#save-production') as HTMLButtonElement;
-      
-      // 1. CAPTURAR NOTAS (Bitácora acumulativa)
-      const newNoteInput = modal.querySelector('#update-new-note') as HTMLTextAreaElement;
-      const newNoteText = newNoteInput.value.trim();
-      let finalNotes = order.notes || ''; // Tomamos lo que ya existe en la BD
+    const saveBtn = modal.querySelector('#save-production') as HTMLButtonElement;
 
-      if (newNoteText !== "") {
-    const now = new Date();
-    // Agregamos la fecha y hora
-    const timestamp = `${now.getDate()}/${now.getMonth() + 1} ${now.getHours()}:${now.getMinutes()}`;
-    const entry = `[${timestamp}]: ${newNoteText}`;
-    
-    // El \n es vital para que Go lo guarde como multilínea
-    finalNotes = finalNotes ? `${finalNotes}\n${entry}` : entry;
-  }
+    // 1. CAPTURAR NOTAS (Bitácora acumulativa)
+    const newNoteInput = modal.querySelector('#update-new-note') as HTMLTextAreaElement;
+    const newNoteText = newNoteInput.value.trim();
+    let finalNotes = order.notes || ''; // Tomamos lo que ya existe en la BD
 
-      // 2. CAPTURAR MATERIAL Y MÁQUINA
-      const materialIdRaw = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
-      const machineIdRaw  = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
+    if (newNoteText !== "") {
+      const now = new Date();
+      // Agregamos la fecha y hora
+      const timestamp = `${now.getDate()}/${now.getMonth() + 1} ${now.getHours()}:${now.getMinutes()}`;
+      const entry = `[${timestamp}]: ${newNoteText}`;
 
-      // Guard: never send 0 as material — backend will reject it
-      const materialId = materialIdRaw > 0 ? materialIdRaw : undefined;
-      // 0 = "Sin asignar" → send null to unassign; otherwise send the id
-      const machineId: number | null | undefined =
-        machineIdRaw === '0' ? null : machineIdRaw ? Number(machineIdRaw) : undefined;
+      // El \n es vital para que Go lo guarde como multilínea
+      finalNotes = finalNotes ? `${finalNotes}\n${entry}` : entry;
+    }
 
-      saveBtn.disabled = true;
-      saveBtn.innerText = 'GUARDANDO...';
+    // 2. CAPTURAR MATERIAL Y MÁQUINA
+    const materialIdRaw = Number((modal.querySelector('#update-material-id') as HTMLSelectElement).value);
+    const machineIdRaw = (modal.querySelector('#update-machine-id') as HTMLSelectElement).value;
 
-      // 3. CAPTURAR ITEMS
-      const updatedItems: UpdateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-progress-input')).map((input: any) => ({
-        id: Number(input.dataset.itemId),
-        product_name: input.dataset.productName,
-        quantity: Number(input.dataset.totalQty),
+    // Guard: never send 0 as material — backend will reject it
+    const materialId = materialIdRaw > 0 ? materialIdRaw : undefined;
+    // 0 = "Sin asignar" → send null to unassign; otherwise send the id
+    const machineId: number | null | undefined =
+      machineIdRaw === '0' ? null : machineIdRaw ? Number(machineIdRaw) : undefined;
+
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'GUARDANDO...';
+
+    // 3. CAPTURAR ITEMS — cada row tiene: done_pieces, price, material_id, machine_id
+    const itemRows = Array.from(modal.querySelectorAll('.item-progress-input'));
+    const updatedItems: UpdateOrderItemDTO[] = itemRows.map((input: any) => {
+      const row     = input.closest('.rounded-\[20px\]') as HTMLElement;
+      const macVal  = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
+      const matVal  = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
+      const pricVal = (row?.querySelector('.item-price-input') as HTMLInputElement | null)?.value ?? '0';
+      return {
+        id:          Number(input.dataset.itemId),
+        stl_name:    input.dataset.stlName || '',
+        quantity:    Number(input.dataset.totalQty),
         done_pieces: Number(input.value),
-      }));
-
-      const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
-
-      // 4. ARMAR PAYLOAD FINAL
-      const priceRaw = (modal.querySelector('#update-price') as HTMLInputElement).value;
-      const updateData: UpdateOrderDTO = {
-        items: updatedItems,
-        done_pieces: totalDone,
-        material_id: materialId,
-        machine_id: machineId,
-        notes: finalNotes,
-        price: priceRaw !== '' ? Number(priceRaw) : undefined,
+        price:       Number(pricVal),
+        machine_id:  macVal && macVal !== '0' ? Number(macVal) : undefined,
+        material_id: matVal && matVal !== ''  ? Number(matVal)  : undefined,
       };
+    });
 
-      try {
-        await productionService.updateOrder(Number(order.id), updateData);
-        modal.remove();
-        const freshData = await productionService.getProductionDashboard();
-        renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
-      } catch (error) {
-        alert("Error al actualizar la producción");
-        saveBtn.disabled = false;
-        saveBtn.innerText = 'Guardar Cambios';
-      }
+    const totalDone = updatedItems.reduce((acc, item) => acc + item.done_pieces, 0);
+
+    // 4. ARMAR PAYLOAD FINAL — price is now per-item, backend sums into TotalPrice
+    const updateData: UpdateOrderDTO = {
+      items: updatedItems,
+      done_pieces: totalDone,
+      material_id: materialId,
+      machine_id: machineId,
+      notes: finalNotes,
+    };
+
+    try {
+      await productionService.updateOrder(Number(order.id), updateData);
+      modal.remove();
+      const freshData = await productionService.getProductionDashboard();
+      renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
+    } catch (error) {
+      alert("Error al actualizar la producción");
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Guardar Cambios';
+    }
   });
 };
 
 // --- MODAL 2: NUEVA ORDEN ---
 export const openNewOrderModal = async () => {
-    let materials: any[] = [];
-    let machines: any[] = [];
-    let allOrders: any[] = [];
-    try {
-        const [resMat, resMac, resHis] = await Promise.all([
-            productionService.getMaterials(),
-            productionService.getMachines(),
-            productionService.getHistoricalOrders()
-        ]);
-        materials = Array.isArray(resMat) ? resMat : [];
-        machines = Array.isArray(resMac) ? resMac : [];
-        allOrders = Array.isArray(resHis) ? resHis : [];
-    } catch (err) {
-        console.error("Error cargando dependencias:", err);
-    }
+  let materials: any[] = [];
+  let machines: any[] = [];
+  let allOrders: any[] = [];
+  try {
+    const [resMat, resMac, resHis] = await Promise.all([
+      productionService.getMaterials(),
+      productionService.getMachines(),
+      productionService.getHistoricalOrders()
+    ]);
+    materials = Array.isArray(resMat) ? resMat : [];
+    machines = Array.isArray(resMac) ? resMac : [];
+    allOrders = Array.isArray(resHis) ? resHis : [];
+  } catch (err) {
+    console.error("Error cargando dependencias:", err);
+  }
 
-    const uniqueClients = [...new Set(allOrders.map((o: any) => o.client_name))].sort();
+  const uniqueClients = [...new Set(allOrders.map((o: any) => o.client_name))].sort();
 
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-[#0f172a]/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300';
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-[#0f172a]/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300';
 
-    modal.innerHTML = `
+  modal.innerHTML = `
     <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
       <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
         <div>
@@ -342,42 +361,42 @@ export const openNewOrderModal = async () => {
       </form>
     </div>`;
 
-    document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-    // Búsqueda de Materiales
-    const matInput = modal.querySelector('#mat-search') as HTMLInputElement;
-    const matResults = modal.querySelector('#mat-results') as HTMLDivElement;
-    const matHidden = modal.querySelector('#mat-id-hidden') as HTMLInputElement;
+  // Búsqueda de Materiales
+  const matInput = modal.querySelector('#mat-search') as HTMLInputElement;
+  const matResults = modal.querySelector('#mat-results') as HTMLDivElement;
+  const matHidden = modal.querySelector('#mat-id-hidden') as HTMLInputElement;
 
-    matInput.addEventListener('input', (e) => {
-        const val = (e.target as HTMLInputElement).value.toLowerCase();
-        if (!val) { matResults.classList.add('hidden'); return; }
-        const matches = materials.filter((m: any) => m.name.toLowerCase().includes(val));
-        if (matches.length > 0) {
-            matResults.classList.remove('hidden');
-            matResults.innerHTML = matches.map((m: any) => `
+  matInput.addEventListener('input', (e) => {
+    const val = (e.target as HTMLInputElement).value.toLowerCase();
+    if (!val) { matResults.classList.add('hidden'); return; }
+    const matches = materials.filter((m: any) => m.name.toLowerCase().includes(val));
+    if (matches.length > 0) {
+      matResults.classList.remove('hidden');
+      matResults.innerHTML = matches.map((m: any) => `
                 <div class="mat-opt p-3 hover:bg-blue-50 cursor-pointer rounded-xl font-bold text-xs text-[#0f172a] flex justify-between" data-id="${m.id}" data-name="${m.name}">
                     <span>${m.name}</span>
                     <span class="text-[9px] text-blue-300 font-black">ID: ${m.id}</span>
                 </div>
             `).join('');
 
-            matResults.querySelectorAll('.mat-opt').forEach(opt => {
-                opt.addEventListener('click', (e) => {
-                    const t = e.currentTarget as HTMLElement;
-                    matInput.value = t.dataset.name!;
-                    matHidden.value = t.dataset.id!;
-                    matResults.classList.add('hidden');
-                });
-            });
-        }
-    });
+      matResults.querySelectorAll('.mat-opt').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          const t = e.currentTarget as HTMLElement;
+          matInput.value = t.dataset.name!;
+          matHidden.value = t.dataset.id!;
+          matResults.classList.add('hidden');
+        });
+      });
+    }
+  });
 
-    // Helper: build a new item row HTML
-    const buildItemRowHTML = (mats: any[], macs: any[]) => {
-        const matOptions = mats.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('');
-        const macOptions = macs.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('');
-        return `
+  // Helper: build a new item row HTML
+  const buildItemRowHTML = (mats: any[], macs: any[]) => {
+    const matOptions = mats.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('');
+    const macOptions = macs.map((m: any) => `<option value="${m.id}">${m.name} (${m.status})</option>`).join('');
+    return `
             <div class="flex gap-3 items-center">
                 <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
@@ -400,97 +419,97 @@ export const openNewOrderModal = async () => {
                 </div>
             </div>
         `;
+  };
+
+  // Filas Dinámicas
+  const container = modal.querySelector('#items-container')!;
+  modal.querySelector('#add-item-row')?.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'item-row bg-slate-50 border border-slate-100 rounded-[20px] p-4 space-y-3 animate-in slide-in-from-bottom-2 duration-200';
+    row.innerHTML = buildItemRowHTML(materials, machines);
+    row.querySelector('.remove-row')?.addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  });
+
+  const form = modal.querySelector('#form-new-order') as HTMLFormElement;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = modal.querySelector('#btn-submit-new') as HTMLButtonElement;
+
+    // material_id is optional when every item has its own
+    const allItemsHaveMaterial = Array.from(modal.querySelectorAll('.item-material-id')).every((s: any) => s.value !== '');
+    if (!matHidden.value && !allItemsHaveMaterial) {
+      alert("Seleccioná un material por defecto, o asignale uno a cada pieza.");
+      return;
+    }
+
+    btn.disabled = true; btn.innerText = 'PROCESANDO...';
+
+    const fd = new FormData(form);
+    const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
+
+    const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
+      const itemMatVal = row.querySelector('.item-material-id')?.value;
+      const itemMacVal = row.querySelector('.item-machine-id')?.value;
+      return {
+        stl_name: row.querySelector('.item-name').value,
+        quantity: Number(row.querySelector('.item-qty').value),
+        done_pieces: 0,
+        material_id: itemMatVal ? Number(itemMatVal) : undefined,
+        machine_id: itemMacVal ? Number(itemMacVal) : undefined,
+      };
+    });
+
+    const { user_id } = getUserFromToken();
+    const hours = Number(fd.get('estimated_hours') || 0);
+    const mins = Number(fd.get('estimated_minutes_form') || 0);
+
+    const payload: CreateOrderDTO = {
+      id: Number(fd.get('id')),
+      client_name: String(fd.get('client_name')),
+      items: items,
+      material_id: Number(fd.get('material_id')),
+      priority: String(fd.get('priority')),
+      notes: String(fd.get('notes') || ""),
+      estimated_minutes: hours * 60 + mins,
+      deadline: String(fd.get('deadline')),
+      operator_id: user_id || 1,
+      machine_id: defaultMachineId ? Number(defaultMachineId) : undefined,
+      price: Number(fd.get('price') || 0)
     };
 
-    // Filas Dinámicas
-    const container = modal.querySelector('#items-container')!;
-    modal.querySelector('#add-item-row')?.addEventListener('click', () => {
-        const row = document.createElement('div');
-        row.className = 'item-row bg-slate-50 border border-slate-100 rounded-[20px] p-4 space-y-3 animate-in slide-in-from-bottom-2 duration-200';
-        row.innerHTML = buildItemRowHTML(materials, machines);
-        row.querySelector('.remove-row')?.addEventListener('click', () => row.remove());
-        container.appendChild(row);
-    });
+    try {
+      await productionService.createOrder(payload);
+      modal.remove();
+      const freshData = await productionService.getProductionDashboard();
+      const { renderProduction } = await import('./productionView');
+      renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
+    } catch (err) {
+      alert("Error al crear la orden: Revisá que el ID no esté duplicado.");
+      btn.disabled = false; btn.innerText = 'Lanzar Orden';
+    }
+  });
 
-    const form = modal.querySelector('#form-new-order') as HTMLFormElement;
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = modal.querySelector('#btn-submit-new') as HTMLButtonElement;
-        
-        // material_id is optional when every item has its own
-        const allItemsHaveMaterial = Array.from(modal.querySelectorAll('.item-material-id')).every((s: any) => s.value !== '');
-        if (!matHidden.value && !allItemsHaveMaterial) {
-            alert("Seleccioná un material por defecto, o asignale uno a cada pieza.");
-            return;
-        }
-
-        btn.disabled = true; btn.innerText = 'PROCESANDO...';
-
-        const fd = new FormData(form);
-        const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
-
-        const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
-            const itemMatVal  = row.querySelector('.item-material-id')?.value;
-            const itemMacVal  = row.querySelector('.item-machine-id')?.value;
-            return {
-                product_name: row.querySelector('.item-name').value,
-                quantity:     Number(row.querySelector('.item-qty').value),
-                done_pieces:  0,
-                material_id:  itemMatVal  ? Number(itemMatVal)  : undefined,
-                machine_id:   itemMacVal  ? Number(itemMacVal)  : undefined,
-            };
-        });
-
-        const { user_id } = getUserFromToken();
-        const hours = Number(fd.get('estimated_hours') || 0);
-        const mins  = Number(fd.get('estimated_minutes_form') || 0);
-
-        const payload: CreateOrderDTO = {
-            id: Number(fd.get('id')),
-            client_name: String(fd.get('client_name')),
-            items: items,
-            material_id: Number(fd.get('material_id')),
-            priority: String(fd.get('priority')),
-            notes: String(fd.get('notes') || ""),
-            estimated_minutes: hours * 60 + mins,
-            deadline: String(fd.get('deadline')),
-            operator_id: user_id || 1,
-            machine_id: defaultMachineId ? Number(defaultMachineId) : undefined,
-            price: Number(fd.get('price') || 0)
-        };
-
-        try {
-            await productionService.createOrder(payload);
-            modal.remove();
-            const freshData = await productionService.getProductionDashboard();
-            const { renderProduction } = await import('./productionView');
-            renderProduction(document.getElementById('app') as HTMLDivElement, freshData);
-        } catch (err) {
-            alert("Error al crear la orden: Revisá que el ID no esté duplicado.");
-            btn.disabled = false; btn.innerText = 'Lanzar Orden';
-        }
-    });
-
-    modal.querySelector('#close-modal-new')?.addEventListener('click', () => modal.remove());
-    modal.querySelector('#btn-cancel-new')?.addEventListener('click', () => modal.remove());
+  modal.querySelector('#close-modal-new')?.addEventListener('click', () => modal.remove());
+  modal.querySelector('#btn-cancel-new')?.addEventListener('click', () => modal.remove());
 };
 
 export const openOrderDetailModal = (
-  order: ProductionOrder, 
-  materials: any[] = [], 
+  order: ProductionOrder,
+  materials: any[] = [],
   machines: any[] = []
 ) => {
-    const materialName = getMaterialName(order.material_id, materials);
-    const machineName = getMachineName(order.machine_id, machines);
+  const materialName = getMaterialName(order.material_id, materials);
+  const machineName = getMachineName(order.machine_id, machines);
 
-    // Lógica para el sello de finalización
-    let finishBadge = '';
-    if (order.finish_time) {
-        const finishDate = new Date(order.finish_time);
-        const deadlineDate = new Date(order.deadline);
-        const isLate = finishDate > deadlineDate;
+  // Lógica para el sello de finalización
+  let finishBadge = '';
+  if (order.finish_time) {
+    const finishDate = new Date(order.finish_time);
+    const deadlineDate = new Date(order.deadline);
+    const isLate = finishDate > deadlineDate;
 
-        finishBadge = `
+    finishBadge = `
             <div class="mt-4 p-4 ${isLate ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'} border rounded-2xl">
                 <p class="text-[9px] font-black uppercase ${isLate ? 'text-amber-600' : 'text-emerald-600'} tracking-widest mb-1">
                     ${isLate ? '⚠️ Finalizada con retraso' : '✅ Finalizada a tiempo'}
@@ -500,14 +519,14 @@ export const openOrderDetailModal = (
                 </p>
             </div>
         `;
-    }
+  }
 
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-[#0f172a]/80 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300';
-    
-    const priorityColor = order.priority === 'P1' ? 'text-red-500 bg-red-50' : 'text-blue-500 bg-blue-50';
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-[#0f172a]/80 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300';
 
-    modal.innerHTML = `
+  const priorityColor = order.priority === 'P1' ? 'text-red-500 bg-red-50' : 'text-blue-500 bg-blue-50';
+
+  modal.innerHTML = `
     <div class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
         <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
             <div>
@@ -548,7 +567,7 @@ export const openOrderDetailModal = (
                         ${order.items.map(item => `
                             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                                 <div>
-                                    <p class="text-sm font-black text-slate-700">${item.product_name}</p>
+                                    <p class="text-sm font-black text-slate-700">${item.stl_name}</p>
                                     <p class="text-[10px] text-slate-400 font-bold uppercase">Meta: ${item.quantity} unidades</p>
                                 </div>
                                 <div class="text-right">
@@ -580,6 +599,6 @@ export const openOrderDetailModal = (
         </div>
     </div>`;
 
-    document.body.appendChild(modal);
-    modal.querySelector('#close-detail')?.addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+  modal.querySelector('#close-detail')?.addEventListener('click', () => modal.remove());
 };

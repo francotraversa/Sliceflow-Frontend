@@ -137,7 +137,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                     <tbody class="divide-y divide-slate-50">
                       ${order.items && order.items.length > 0 ? order.items.map(item => `
                         <tr>
-                          <td class="px-6 py-4 font-bold text-slate-700">${item.product_name}</td>
+                          <td class="px-6 py-4 font-bold text-slate-700">${item.stl_name}</td>
                           <td class="px-6 py-4">
                             <div class="flex items-center justify-center gap-3">
                                <span class="text-[11px] font-black text-slate-400 min-w-[45px]">${item.done_pieces} / ${item.quantity}</span>
