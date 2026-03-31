@@ -20,13 +20,14 @@ export const parseJwt = (token: string): JwtPayload | null => {
 
 export const getUserFromToken = () => {
   const token = localStorage.getItem('token');
-  if (!token) return { user: '—', role: '—', user_id: 0 };
+  if (!token) return { user: '—', role: '—', user_id: 0, company_id: 0 };
 
   const p = parseJwt(token);
   return {
     user: p?.user ?? '—',
     role: p?.role ?? '—',
     user_id: p?.user_id ?? 0,
+    company_id: p?.company_id ?? 0,
   };
 };
 export const getUserRole = () => {
@@ -70,4 +71,22 @@ export const authService = {
 
     return Date.now() < parseInt(expires, 10) * 1000;
   },
+
+  getUsers: async (): Promise<any[]> => {
+    const users = await apiFetch<any[]>('/hornero/authed/admin/alluser');
+    return users;
+  },
+
+  createUser: async (data: any): Promise<void> => {
+    await apiFetch('/hornero/authed/admin/newuser', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteUser: async (id: number): Promise<void> => {
+    await apiFetch(`/hornero/authed/admin/deleteuser/${id}`, {
+      method: 'DELETE',
+    });
+  }
 };

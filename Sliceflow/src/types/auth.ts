@@ -1,10 +1,9 @@
 export interface User {
-  id: number;
-  username: string;
-  role: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  IdUser: number;
+  Username: string;
+  Role: string;
+  Status: string;
+  id_company: number;
 }
 
 export interface UserLoginCreds {
@@ -21,11 +20,13 @@ export interface UserCreateCreds {
   username: string;
   password: string;
   role: string;
+  id_company: number;
 }
 
 export type JwtPayload = {
   user?: string;
   role?: string;
   user_id?: number;
+  company_id?: number;
   exp?: number;
 };
