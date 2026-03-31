@@ -166,17 +166,21 @@ export const openUpdateProductionModal = async (
     // 3. CAPTURAR ITEMS — cada row tiene: done_pieces, price, material_id, machine_id
     const itemRows = Array.from(modal.querySelectorAll('.item-progress-input'));
     const updatedItems: CreateOrderItemDTO[] = itemRows.map((input: any) => {
-      const row     = input.closest('.item-update-row') as HTMLElement;
-      const macVal  = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
-      const matVal  = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
+      const row = input.closest('.item-update-row') as HTMLElement;
+      const macVal = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
+      const matVal = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
       const pricVal = (row?.querySelector('.item-price-input') as HTMLInputElement | null)?.value ?? '0';
+      const weightVal = (row?.querySelector('.item-weight-input') as HTMLInputElement | null)?.value;
+      const timeVal = (row?.querySelector('.item-time-input') as HTMLInputElement | null)?.value;
       return {
-        stl_name:    input.dataset.stlName || '',
-        quantity:    Number(input.dataset.totalQty),
+        stl_name: input.dataset.stlName || '',
+        quantity: Number(input.dataset.totalQty),
         done_pieces: Number(input.value),
-        price:       Number(pricVal),
-        machine_id:  macVal && macVal !== '0' ? Number(macVal) : undefined,
-        material_id: matVal && matVal !== ''  ? Number(matVal)  : undefined,
+        price: Number(pricVal),
+        machine_id: macVal && macVal !== '0' ? Number(macVal) : undefined,
+        material_id: matVal && matVal !== '' ? Number(matVal) : undefined,
+        weight: weightVal ? Number(weightVal) : 0, // Mandamos 0 si está vacío para que pise el anterior
+        time: timeVal ? Number(timeVal) : 0,
       };
     });
 
@@ -456,40 +460,40 @@ export const openNewOrderModal = async () => {
 
     const fd = new FormData(form);
     const defaultMaterialId = matHidden.value ? Number(matHidden.value) : undefined;
-    const defaultMachineId  = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
-    const defaultMacNum     = defaultMachineId ? Number(defaultMachineId) : undefined;
+    const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
+    const defaultMacNum = defaultMachineId ? Number(defaultMachineId) : undefined;
 
     const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
       const itemMatVal = (row.querySelector('.item-material-id') as HTMLSelectElement)?.value;
       const itemMacVal = (row.querySelector('.item-machine-id') as HTMLSelectElement)?.value;
-      const itemPrice  = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
+      const itemPrice = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
       const itemWeight = (row.querySelector('.item-weight') as HTMLInputElement)?.value;
-      const itemTime   = (row.querySelector('.item-time') as HTMLInputElement)?.value;
+      const itemTime = (row.querySelector('.item-time') as HTMLInputElement)?.value;
       return {
-        stl_name:    row.querySelector('.item-name').value,
-        quantity:    Number(row.querySelector('.item-qty').value),
+        stl_name: row.querySelector('.item-name').value,
+        quantity: Number(row.querySelector('.item-qty').value),
         done_pieces: 0,
-        price:       Number(itemPrice),
-        weight:      itemWeight ? Number(itemWeight) : undefined,
-        time:        itemTime   ? Number(itemTime)   : undefined,
+        price: Number(itemPrice),
+        weight: itemWeight ? Number(itemWeight) : undefined,
+        time: itemTime ? Number(itemTime) : undefined,
         // fall back to order-level default if no item-specific value
         material_id: itemMatVal ? Number(itemMatVal) : defaultMaterialId,
-        machine_id:  itemMacVal ? Number(itemMacVal) : defaultMacNum,
+        machine_id: itemMacVal ? Number(itemMacVal) : defaultMacNum,
       };
     });
 
     const { user_id } = getUserFromToken();
 
     const payload: CreateOrderDTO = {
-      id:                Number(fd.get('id')),
-      client_name:       String(fd.get('client_name')),
-      items:             items,
-      priority:          String(fd.get('priority')),
-      notes:             String(fd.get('notes') || ''),
-      estimated_hours:   Number(fd.get('estimated_hours') || 0),
+      id: Number(fd.get('id')),
+      client_name: String(fd.get('client_name')),
+      items: items,
+      priority: String(fd.get('priority')),
+      notes: String(fd.get('notes') || ''),
+      estimated_hours: Number(fd.get('estimated_hours') || 0),
       estimated_minutes: Number(fd.get('estimated_minutes_form') || 0), // 0-59, backend does the math
-      deadline:          String(fd.get('deadline')),
-      operator_id:       user_id || 1,
+      deadline: String(fd.get('deadline')),
+      operator_id: user_id || 1,
     };
 
     try {
@@ -566,13 +570,13 @@ export const openOrderDetailModal = (
                     <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2">Recursos por Pieza</label>
                     <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 space-y-2 max-h-[200px] overflow-y-auto">
                         ${order.items.map(item => {
-                          const iMat = (item as any).material?.name
-                            || (item.material_id ? (materials.find((m) => m.id === item.material_id)?.name || '#' + item.material_id) : null);
-                          const iMac = (item as any).machine?.name
-                            || (item.machine_id ? (machines.find((m) => m.id === item.machine_id)?.name || '#' + item.machine_id) : null);
-                          const iName = item.product_name || '—';
+    const iMat = (item as any).material?.name
+      || (item.material_id ? (materials.find((m) => m.id === item.material_id)?.name || '#' + item.material_id) : null);
+    const iMac = (item as any).machine?.name
+      || (item.machine_id ? (machines.find((m) => m.id === item.machine_id)?.name || '#' + item.machine_id) : null);
+    const iName = item.product_name || '—';
 
-                          return `
+    return `
                           <div class="bg-white rounded-2xl px-3 py-2.5 border border-slate-100">
                             <p class="text-xs font-black text-slate-700 mb-1">${iName}</p>
                             <div class="flex gap-2 flex-wrap">
@@ -580,7 +584,8 @@ export const openOrderDetailModal = (
                               ${iMac ? '<span class="bg-indigo-50 text-indigo-600 text-[8px] font-black px-2 py-0.5 rounded-full">' + iMac + '</span>' : ''}
                               ${!iMat && !iMac ? '<span class="text-slate-300 text-[8px] font-black">Sin recursos asignados</span>' : ''}
                             </div>
-                          </div>`;}).join('')}
+                          </div>`;
+  }).join('')}
                         <p class="text-xs font-medium text-slate-400 mt-2">Operador ID: #${order.operator_id}</p>
                     </div>
                 </div>
@@ -630,10 +635,10 @@ export const openOrderDetailModal = (
   modal.querySelector('#close-detail')?.addEventListener('click', () => modal.remove());
 
   modal.querySelector('#btn-print-ticket')?.addEventListener('click', () => {
-    const orderNum  = order.id_order ?? order.id;
+    const orderNum = order.id_order ?? order.id;
     const totalPrice = ((order as any).total_price ?? (order as any).price ?? 0).toLocaleString();
     const createdAt = new Date(order.created_at).toLocaleDateString();
-    const deadline  = order.deadline ? new Date(order.deadline).toLocaleDateString() : '___________';
+    const deadline = order.deadline ? new Date(order.deadline).toLocaleDateString() : '___________';
 
     // Build one table row per item
     const itemRows = (order.items ?? []).map(item => {
@@ -641,7 +646,7 @@ export const openOrderDetailModal = (
         || (item.material_id ? materials.find((m: any) => m.id === item.material_id)?.name || '' : '');
       const iMac = (item as any).machine?.name
         || (item.machine_id ? machines.find((m: any) => m.id === item.machine_id)?.name || '' : '');
-      const name  = item.product_name || '';
+      const name = item.product_name || '';
 
       return `
         <tr>
