@@ -40,27 +40,6 @@ export const openUpdateProductionModal = async (
       </div>
 
       <div class="p-8 space-y-6">
-        <div class="grid grid-cols-2 gap-4 p-2">
-            <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Material</label>
-                <select id="update-material-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                    ${finalMaterials.map(m => `
-                        <option value="${m.id}">${m.name}</option>
-                    `).join('')}
-
-                </select>
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Máquina Asignada</label>
-                <select id="update-machine-id" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                    <option value="0">Sin asignar / Libre</option>
-                    ${finalMachines.map(m => `
-                        <option value="${m.id}">${m.name} (${m.status})</option>
-                    `).join('')}
-
-                </select>
-            </div>
-        </div>
 
         <div class="relative">
           <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3 ml-1">Progreso y Configuración de Items</label>
