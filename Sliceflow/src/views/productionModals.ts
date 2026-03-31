@@ -681,15 +681,17 @@ export const openOrderDetailModal = (
   <meta charset="UTF-8">
   <title>Ticket Orden #${orderNum} — Hornero 3DX</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; margin: 0; padding: 0; 
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important; 
+    }
     body {
       font-family: Arial, Helvetica, sans-serif;
       font-size: 10px;
       color: #000;
       background: #fff;
       padding: 12mm;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
     }
     /* ── Header ── */
     .header {
@@ -707,8 +709,8 @@ export const openOrderDetailModal = (
 
     /* ── Section headers ── */
     .section-header {
-      background: #333;
-      color: #fff;
+      background-color: #333 !important;
+      color: #fff !important;
       text-align: center;
       font-weight: 700;
       font-size: 10px;
