@@ -276,11 +276,11 @@ export const openNewOrderModal = async () => {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Horas Est.</label>
-            <input type="number" name="estimated_hours" value="0" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+            <input type="number" id="global-hours-input" name="estimated_hours" value="0" min="0" readonly class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-not-allowed">
           </div>
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Mins Est.</label>
-            <input type="number" name="estimated_minutes_form" value="0" min="0" max="59" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none">
+            <input type="number" id="global-mins-input" name="estimated_minutes_form" value="0" min="0" max="59" readonly class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-not-allowed">
           </div>
         </div>
 
@@ -442,11 +442,40 @@ export const openNewOrderModal = async () => {
 
   // Filas Dinámicas
   const container = modal.querySelector('#items-container')!;
+  
+  // Función para actualizar los totales de tiempo
+  const updateGlobalTime = () => {
+    let totalMinutes = 0;
+    container.querySelectorAll('.item-row').forEach(row => {
+      const qty = Number((row.querySelector('.item-qty') as HTMLInputElement).value || 0);
+      const time = Number((row.querySelector('.item-time') as HTMLInputElement).value || 0);
+      totalMinutes += (qty * time);
+    });
+
+    const hInput = modal.querySelector('#global-hours-input') as HTMLInputElement;
+    const mInput = modal.querySelector('#global-mins-input') as HTMLInputElement;
+    
+    if (hInput && mInput) {
+      hInput.value = Math.floor(totalMinutes / 60).toString();
+      mInput.value = (totalMinutes % 60).toString();
+    }
+  };
+
+  container.addEventListener('input', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('item-time') || target.classList.contains('item-qty')) {
+      updateGlobalTime();
+    }
+  });
+
   modal.querySelector('#add-item-row')?.addEventListener('click', () => {
     const row = document.createElement('div');
     row.className = 'item-row bg-slate-50 border border-slate-100 rounded-[20px] p-4 space-y-3 animate-in slide-in-from-bottom-2 duration-200';
     row.innerHTML = buildItemRowHTML(materials, machines);
-    row.querySelector('.remove-row')?.addEventListener('click', () => row.remove());
+    row.querySelector('.remove-row')?.addEventListener('click', () => {
+      row.remove();
+      updateGlobalTime();
+    });
     container.appendChild(row);
   });
 

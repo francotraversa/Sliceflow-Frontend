@@ -12,7 +12,40 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
     return acc + itemsSum;
   }, 0);
 
-  const totalSLSOrders = data.active_orders.length;
+  let totalConsumoFDM = 0;
+  let totalConsumoResina = 0;
+  let totalTiempoCola = 0; // en minutos
+
+  data.active_orders.forEach(order => {
+    order.items?.forEach((item: any) => {
+      const qty = item.quantity || 0;
+      const done = item.done_pieces || 0;
+      const remaining = Math.max(0, qty - done);
+
+      totalTiempoCola += (Number(item.time) || 0) * remaining;
+
+      let isResin = false;
+      const machine = data.machines?.find(m => m.id === item.machine_id);
+      const mType = (machine?.type || '').toLowerCase();
+      if (mType.includes('resina') || mType.includes('sla') || mType.includes('sls')) {
+        isResin = true;
+      } else if (!machine) {
+        const matName = (item.material?.name || '').toLowerCase();
+        if (matName.includes('resina') || matName.includes('sla') || matName.includes('sls')) {
+          isResin = true;
+        }
+      }
+
+      if (isResin) {
+        totalConsumoResina += (Number(item.weight) || 0) * remaining;
+      } else {
+        totalConsumoFDM += (Number(item.weight) || 0) * remaining;
+      }
+    });
+  });
+
+  const backlogHours = Math.floor(totalTiempoCola / 60);
+  const backlogMins = totalTiempoCola % 60;
 
   app.innerHTML = `
     <div class="min-h-screen bg-[#f8fafc] font-sans text-slate-900 animate-in fade-in duration-500">
@@ -43,45 +76,56 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
       <main class="p-8 max-w-7xl mx-auto space-y-8">
 
         <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Generado por I3D</span>
-              <div class="p-2 bg-blue-50 rounded-lg text-blue-500 text-xs">🖨️</div>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Total<br>Generado</span>
+              <div class="p-2 bg-blue-50 rounded-lg text-blue-500 text-xs">💰</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${totalI3D.toLocaleString()}` : '••••••'}</h2>
+            <h2 class="text-2xl font-black text-[#0f172a]">${isAdmin ? `$${totalI3D.toLocaleString()}` : '••••'}</h2>
           </div>
 
-          <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Órdenes Activas</span>
-              <div class="p-2 bg-purple-50 rounded-lg text-purple-500 text-xs">📋</div>
+          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Consumo<br>Estimado</span>
+              <div class="p-2 bg-emerald-50 rounded-lg text-emerald-500 text-xs">⚖️</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${totalSLSOrders}</h2>
+            <div class="flex flex-col gap-1">
+              <p class="text-lg font-black text-[#0f172a] leading-none">${(totalConsumoFDM / 1000).toFixed(2)} <span class="text-[10px] text-slate-400">kg (FDM)</span></p>
+              <p class="text-lg font-black text-[#0f172a] leading-none">${(totalConsumoResina / 1000).toFixed(2)} <span class="text-[10px] text-slate-400">L (Resina)</span></p>
+            </div>
           </div>
 
-          <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Trabajos Activos</span>
+          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Tiempo<br>en Cola</span>
+              <div class="p-2 bg-indigo-50 rounded-lg text-indigo-500 text-xs">⏱️</div>
+            </div>
+            <h2 class="text-2xl font-black text-[#0f172a]">${backlogHours}<span class="text-xs text-slate-400 font-bold ml-1">h</span> ${backlogMins}<span class="text-xs text-slate-400 font-bold ml-1">m</span></h2>
+            <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">Backlog de impresión</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Trabajos<br>Activos</span>
               <div class="p-2 bg-amber-50 rounded-lg text-amber-500 text-xs">▶️</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${data.active_jobs}</h2>
-            <p class="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">Impresoras en uso</p>
+            <h2 class="text-2xl font-black text-[#0f172a]">${data.active_jobs}</h2>
+            <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">Impresoras en uso</p>
           </div>
 
-          <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Capacidad Ociosa</span>
+          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Capacidad<br>Ociosa</span>
               <div class="p-2 bg-slate-50 rounded-lg text-slate-400 text-xs">📊</div>
             </div>
             <div class="flex items-baseline gap-1">
-              <h2 class="text-3xl font-black text-[#0f172a]">${(100 - Number(data.utilization_rate || 0)).toFixed(2)}%</h2>
-              <span class="text-[10px] font-bold text-slate-300 uppercase">Libre</span>
+              <h2 class="text-2xl font-black text-[#0f172a]">${(100 - Number(data.utilization_rate || 0)).toFixed(1)}%</h2>
+              <span class="text-[9px] font-bold text-slate-300 uppercase">Libre</span>
             </div>
-            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+            <div class="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
               <div class="bg-[#0f172a] h-full transition-all duration-1000" style="width: ${data.utilization_rate}%"></div>
             </div>
-            <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tight">Uso del taller: ${Number(data.utilization_rate || 0).toFixed(2)}%</p>
           </div>
         </div>
 
