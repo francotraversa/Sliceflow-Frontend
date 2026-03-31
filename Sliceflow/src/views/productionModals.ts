@@ -688,6 +688,8 @@ export const openOrderDetailModal = (
       color: #000;
       background: #fff;
       padding: 12mm;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     /* ── Header ── */
     .header {
