@@ -1,16 +1,13 @@
 import { productionService } from '../api/productionServices';
-import { authService, getUserFromToken } from '../api/authServices';
-import { openMachineModal, openMaterialModal, openUserModal } from './configModals';
+// import removed
+import { openMachineModal, openMaterialModal } from './configModals';
 
 export const renderConfig = async (app: HTMLDivElement) => {
-  const { role } = getUserFromToken();
-  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner';
 
   // Cargamos la data inicial
-  const [materials, machines, users] = await Promise.all([
+  const [materials, machines] = await Promise.all([
     productionService.getMaterials(),
-    productionService.getMachines(),
-    isAdmin ? authService.getUsers().catch(() => []) : Promise.resolve([])
+    productionService.getMachines()
   ]);
 
   app.innerHTML = `
@@ -67,31 +64,6 @@ export const renderConfig = async (app: HTMLDivElement) => {
           </div>
         </section>
 
-        ${isAdmin ? `
-        <section class="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 lg:col-span-2">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="font-black text-[#0f172a] uppercase text-sm tracking-widest">Usuarios</h3>
-            <button id="add-user" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-100">+ Nuevo Usuario</button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            ${users.map((u: any) => `
-              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group">
-                <div>
-                  <p class="font-black text-slate-700 text-sm">${u.Username}</p>
-                  <p class="text-[9px] font-bold text-slate-400 relative inline-flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full ${u.Status === 'active' ? 'bg-emerald-400' : 'bg-red-400'}"></span>
-                    <span class="uppercase">${u.Role}</span>
-                  </p>
-                </div>
-                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button class="delete-user text-red-400 text-xs font-bold" data-id="${u.IdUser}">Desactivar</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </section>
-        ` : ''}
-
       </main>
     </div>
   `;
@@ -136,18 +108,4 @@ app.querySelectorAll('.edit-mat').forEach(btn => {
   });
 });
 
-  // User Listeners
-  if (isAdmin) {
-    document.getElementById('add-user')?.addEventListener('click', () => openUserModal(app));
-    
-    app.querySelectorAll('.delete-user').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const id = Number((e.target as HTMLElement).dataset.id);
-        if (confirm("¿Desactivar este usuario?")) {
-          await authService.deleteUser(id);
-          renderConfig(app);
-        }
-      });
-    });
-  }
 };

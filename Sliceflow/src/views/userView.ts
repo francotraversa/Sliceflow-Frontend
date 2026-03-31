@@ -131,7 +131,7 @@ const renderEditUserModal = (u: any, onDone: () => Promise<void>) => {
 // --- VISTA PRINCIPAL ---
 export const renderUsers = async (app: HTMLDivElement) => {
   const me = getUserFromToken(); 
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role.toLowerCase() === "admin" || me.role.toLowerCase() === "owner";
   let users: any[] = [];
   
   const load = async () => {
