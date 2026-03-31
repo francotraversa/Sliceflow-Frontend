@@ -79,13 +79,14 @@ export const openUpdateProductionModal = async (
                            class="item-progress-input w-18 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-400 outline-none w-[72px]"
                            data-item-id="${item.id}"
                            data-stl-name="${item.product_name}"
-
+                           data-old-weight="${item.weight ?? 0}"
+                           data-old-time="${item.time ?? 0}"
                            data-total-qty="${item.quantity}"
                            value="${item.done_pieces}"
                            min="0" max="${item.quantity}">
                   </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-5 gap-2">
                   <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                     <div class="relative">
@@ -94,6 +95,18 @@ export const openUpdateProductionModal = async (
                              class="item-price-input w-full bg-white border border-slate-100 rounded-xl pl-5 pr-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
                              value="${item.price ?? 0}">
                     </div>
+                  </div>
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Peso</label>
+                    <input type="number" step="0.1" min="0" placeholder="0"
+                           class="item-weight-input w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
+                           value="${item.weight ?? ''}">
+                  </div>
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo</label>
+                    <input type="number" min="0" placeholder="0"
+                           class="item-time-input w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
+                           value="${item.time ?? ''}">
                   </div>
                   <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material</label>
@@ -167,20 +180,34 @@ export const openUpdateProductionModal = async (
     const itemRows = Array.from(modal.querySelectorAll('.item-progress-input'));
     const updatedItems: CreateOrderItemDTO[] = itemRows.map((input: any) => {
       const row = input.closest('.item-update-row') as HTMLElement;
-      const macVal = (row?.querySelector('.item-update-machine') as HTMLSelectElement | null)?.value;
-      const matVal = (row?.querySelector('.item-update-material') as HTMLSelectElement | null)?.value;
-      const pricVal = (row?.querySelector('.item-price-input') as HTMLInputElement | null)?.value ?? '0';
-      const weightVal = (row?.querySelector('.item-weight-input') as HTMLInputElement | null)?.value;
-      const timeVal = (row?.querySelector('.item-time-input') as HTMLInputElement | null)?.value;
+
+      // Capturamos los inputs
+      const weightInput = row?.querySelector('.item-weight-input') as HTMLInputElement | null;
+      const timeInput = row?.querySelector('.item-time-input') as HTMLInputElement | null;
+
+      // REGLA DE RECUPERACIÓN: 
+      // 1. Si el input tiene un valor escrito por el usuario, usamos ese.
+      // 2. Si el input está vacío, intentamos usar lo que venía de la DB (guardado en dataset).
+      // 3. Si no hay nada, mandamos 0.
+      const finalWeight = weightInput?.value !== ""
+        ? Number(weightInput?.value)
+        : Number(input.dataset.oldWeight || 0);
+
+      const finalTime = timeInput?.value !== ""
+        ? Number(timeInput?.value)
+        : Number(input.dataset.oldTime || 0);
+
       return {
         stl_name: input.dataset.stlName || '',
         quantity: Number(input.dataset.totalQty),
         done_pieces: Number(input.value),
-        price: Number(pricVal),
-        machine_id: macVal && macVal !== '0' ? Number(macVal) : undefined,
-        material_id: matVal && matVal !== '' ? Number(matVal) : undefined,
-        weight: weightVal ? Number(weightVal) : 0, // Mandamos 0 si está vacío para que pise el anterior
-        time: timeVal ? Number(timeVal) : 0,
+        price: Number((row?.querySelector('.item-price-input') as HTMLInputElement)?.value || 0),
+        machine_id: Number((row?.querySelector('.item-update-machine') as HTMLSelectElement)?.value) || undefined,
+        material_id: Number((row?.querySelector('.item-update-material') as HTMLSelectElement)?.value) || undefined,
+
+        // Aquí usamos los valores recuperados
+        weight: finalWeight,
+        time: finalTime,
       };
     });
 
