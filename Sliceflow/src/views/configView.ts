@@ -4,7 +4,7 @@ import { openMachineModal, openMaterialModal, openUserModal } from './configModa
 
 export const renderConfig = async (app: HTMLDivElement) => {
   const { role } = getUserFromToken();
-  const isAdmin = role === 'admin' || role === 'owner';
+  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner';
 
   // Cargamos la data inicial
   const [materials, machines, users] = await Promise.all([

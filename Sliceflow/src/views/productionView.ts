@@ -64,6 +64,11 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
           <button id="btn-open-config" ${!isAdmin ? 'disabled' : ''} class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 transition-all ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}">
             ⚙️ Configuración
           </button>
+          ${isAdmin ? `
+          <button id="btn-create-user" class="flex items-center gap-2 px-5 py-2.5 border border-emerald-200 bg-emerald-50 rounded-2xl font-black text-[10px] uppercase tracking-widest text-emerald-600 hover:bg-emerald-100 transition-all">
+            👤 Nuevo Usuario
+          </button>
+          ` : ''}
           <button id="btn-new-order" class="flex items-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all">
             ➕ Nueva Orden
           </button>
@@ -344,6 +349,15 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
       renderConfig(app);
     } catch (error) { console.error('Error al cargar la configuración:', error); }
   });
+
+  if (isAdmin) {
+    app.querySelector('#btn-create-user')?.addEventListener('click', async () => {
+      try {
+        const { openUserModal } = await import('./configModals');
+        openUserModal(app);
+      } catch (error) { console.error('Error al abrir modal de usuario:', error); }
+    });
+  }
 
   app.querySelector('#btn-open-history')?.addEventListener('click', async () => {
     const { renderHistory } = await import('./historyView');
