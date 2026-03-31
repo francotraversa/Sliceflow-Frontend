@@ -7,8 +7,12 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
   const { role } = getUserFromToken();
   const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner';
 
-  const totalRevenue = (data.revenue_fdm || 0) ||
-    data.active_orders.reduce((s: number, o: any) => s + (o.total_price || o.price || 0), 0);
+  const totalI3D = data.active_orders.reduce((acc, order) => {
+    const itemsSum = order.items?.reduce((s, item) => s + (Number(item.price) || 0), 0) || 0;
+    return acc + itemsSum;
+  }, 0);
+
+  const totalSLSOrders = data.active_orders.length;
 
   app.innerHTML = `
     <div class="min-h-screen bg-[#f8fafc] font-sans text-slate-900 animate-in fade-in duration-500">
@@ -21,10 +25,10 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
           <button id="btn-go-stock" class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
             📦 Stock
           </button>
-          <button id="btn-open-history" class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
+          <button id="btn-open-history" ${!isAdmin ? 'disabled' : ''} class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 transition-all ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}">
             📋 Historial
           </button>
-          <button id="btn-open-config" class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
+          <button id="btn-open-config" ${!isAdmin ? 'disabled' : ''} class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 transition-all ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}">
             ⚙️ Configuración
           </button>
           <button id="btn-new-order" class="flex items-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all">
@@ -45,15 +49,15 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
               <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Generado por I3D</span>
               <div class="p-2 bg-blue-50 rounded-lg text-blue-500 text-xs">🖨️</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${totalRevenue.toLocaleString()}` : '••••••'}</h2>
+            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${totalI3D.toLocaleString()}` : '••••••'}</h2>
           </div>
 
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
             <div class="flex justify-between items-start mb-4">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">SLS - Total Generado</span>
-              <div class="p-2 bg-purple-50 rounded-lg text-purple-500 text-xs">🖨️</div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Órdenes Activas</span>
+              <div class="p-2 bg-purple-50 rounded-lg text-purple-500 text-xs">📋</div>
             </div>
-            <h2 class="text-3xl font-black text-[#0f172a]">${isAdmin ? `$${(data.revenue_sls || 0).toLocaleString()}` : '••••••'}</h2>
+            <h2 class="text-3xl font-black text-[#0f172a]">${totalSLSOrders}</h2>
           </div>
 
           <div class="bg-white p-7 rounded-[32px] border border-slate-200 shadow-sm">
@@ -206,8 +210,8 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
                   </div>
 
                   <div class="flex justify-end gap-3">
-                    <button class="btn-cancel-order border border-slate-200 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-red-200 hover:text-red-500 transition-all"
-                            data-id="${order.id}" data-order-num="${orderNum}">
+                    <button class="btn-cancel-order border border-slate-200 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:border-red-200 hover:text-red-500'}"
+                            data-id="${order.id}" data-order-num="${orderNum}" ${!isAdmin ? 'disabled' : ''}>
                       ✕ Cancelar
                     </button>
                     ${isReady ? `
