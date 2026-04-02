@@ -64,7 +64,7 @@ export const openMachineModal = (app: HTMLDivElement, machine?: any) => {
       }
       modal.remove();
       const { renderConfig } = await import('./configView');
-      renderConfig(app); 
+      renderConfig(app);
     } catch (err) {
       alert("Error al gestionar la máquina");
     }
@@ -97,8 +97,10 @@ export const openMaterialModal = (app: HTMLDivElement, material?: any) => {
 
         <div>
           <label class="text-[10px] font-black uppercase text-slate-400 mb-2 ml-1 block">Tipo</label>
-          <input type="text" name="type" placeholder="Ej: FDM" value="${material?.type || ''}"
-                 class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none">
+          <select name="type" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none">
+            <option value="FDM" ${material?.type === 'FDM' ? 'selected' : ''}>FDM (Filamento)</option>
+            <option value="SLA" ${material?.type === 'SLA' ? 'selected' : ''}>SLA (Resina)</option>
+          </select>
         </div>
 
         <div class="flex gap-3 pt-6">
