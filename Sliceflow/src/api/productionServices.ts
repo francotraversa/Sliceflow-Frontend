@@ -26,7 +26,7 @@ export const productionService = {
 
   getMetrics: async (): Promise<MetricsResponse> => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE_URL}/hornero/authed/metrics`, {
+    const res = await fetch(`${API_BASE_URL}/hornero/authed/orders/metrics`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -46,10 +46,10 @@ export const productionService = {
     const token = localStorage.getItem('token');
     const params = new URLSearchParams();
     if (filters) {
-      if (filters.status)    params.append('status',    filters.status);
+      if (filters.status) params.append('status', filters.status);
       if (filters.from_date) params.append('from_date', filters.from_date);
-      if (filters.to_date)   params.append('to_date',   filters.to_date);
-      if (filters.id)        params.append('id',        filters.id);
+      if (filters.to_date) params.append('to_date', filters.to_date);
+      if (filters.id) params.append('id', filters.id);
     }
     const res = await fetch(`${API_BASE_URL}/hornero/authed/orders/list?${params.toString()}`, {
       method: 'GET',
