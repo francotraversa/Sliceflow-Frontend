@@ -66,6 +66,24 @@ export interface ProductionDashboardResponse {
     active_orders: ProductionOrder[];
 }
 
+export interface MachineMetric {
+  machine_id: number;
+  machine_name: string;
+  queued_hours: number;
+}
+
+export interface MaterialMetric {
+  material_id: number;
+  material_name: string;
+  material_type: string;
+  queued_kilos: number;
+}
+
+export interface MetricsResponse {
+  machines: MachineMetric[];
+  materials: MaterialMetric[];
+}
+
 /**
  * Sent to POST /orders.
  * StlName → json:"stl_name" in CreateOrderItemDTO (different from OrderItem!)

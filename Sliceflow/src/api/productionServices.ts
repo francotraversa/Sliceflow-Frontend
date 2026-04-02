@@ -4,6 +4,7 @@ import type {
   ProductionDashboardResponse,
   ProductionOrder,
   UpdateOrderDTO,
+  MetricsResponse,
 } from '../types/production';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -20,6 +21,19 @@ export const productionService = {
       }
     });
     if (!res.ok) throw new Error('Error al conectar con el servidor de producción');
+    return await res.json();
+  },
+
+  getMetrics: async (): Promise<MetricsResponse> => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE_URL}/hornero/authed/metrics`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!res.ok) throw new Error('Error al conectar con las metricas en vivo');
     return await res.json();
   },
 

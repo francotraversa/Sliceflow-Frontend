@@ -85,7 +85,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
             <h2 class="text-2xl font-black text-[#0f172a]">${isAdmin ? `$${totalI3D.toLocaleString()}` : '••••'}</h2>
           </div>
 
-          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+          <div id="card-metrics-consumo" class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all">
             <div class="flex justify-between items-start mb-3">
               <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Consumo<br>Estimado</span>
               <div class="p-2 bg-emerald-50 rounded-lg text-emerald-500 text-xs">⚖️</div>
@@ -96,7 +96,7 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
             </div>
           </div>
 
-          <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+          <div id="card-metrics-tiempo" class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all">
             <div class="flex justify-between items-start mb-3">
               <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-tight">Tiempo<br>en Cola</span>
               <div class="p-2 bg-indigo-50 rounded-lg text-indigo-500 text-xs">⏱️</div>
@@ -363,4 +363,27 @@ export const renderProduction = (app: HTMLDivElement, data: ProductionDashboardR
       window.location.reload();
     }
   });
+
+  const openMetricsHandler = async () => {
+    try {
+      const btnConsumo = app.querySelector('#card-metrics-consumo');
+      const btnTiempo = app.querySelector('#card-metrics-tiempo');
+      if (btnConsumo) btnConsumo.classList.add('opacity-50', 'pointer-events-none');
+      if (btnTiempo) btnTiempo.classList.add('opacity-50', 'pointer-events-none');
+      
+      const metrics = await productionService.getMetrics();
+      const { openMetricsModal } = await import('./productionModals');
+      openMetricsModal(metrics);
+    } catch (e: any) {
+      alert(e.message || "Error al cargar las métricas.");
+    } finally {
+      const btnConsumo = app.querySelector('#card-metrics-consumo');
+      const btnTiempo = app.querySelector('#card-metrics-tiempo');
+      if (btnConsumo) btnConsumo.classList.remove('opacity-50', 'pointer-events-none');
+      if (btnTiempo) btnTiempo.classList.remove('opacity-50', 'pointer-events-none');
+    }
+  };
+
+  app.querySelector('#card-metrics-consumo')?.addEventListener('click', openMetricsHandler);
+  app.querySelector('#card-metrics-tiempo')?.addEventListener('click', openMetricsHandler);
 };

@@ -1,5 +1,5 @@
 import { productionService } from '../api/productionServices';
-import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO } from '../types/production';
+import type { CreateOrderDTO, CreateOrderItemDTO, ProductionOrder, UpdateOrderDTO, MetricsResponse } from '../types/production';
 
 import { renderProduction } from './productionView';
 import { getUserFromToken } from '../api/authServices';
@@ -898,5 +898,78 @@ export const openOrderDetailModal = (
 </body>
 </html>`);
     win.document.close();
+  });
+};
+
+export const openMetricsModal = (metrics: MetricsResponse) => {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-[#0f172a]/60 backdrop-blur-sm flex justify-center items-center z-[200] p-4 font-sans animate-in zoom-in-95';
+
+  modal.innerHTML = `
+    <div class="bg-white w-full max-w-4xl rounded-[40px] p-10 shadow-2xl relative text-left flex flex-col max-h-[90vh]">
+      <button id="close-metrics-btn" class="absolute top-8 right-8 text-slate-400 hover:text-slate-600 text-2xl font-black transition-all hover:rotate-90">✕</button>
+
+      <div class="mb-10">
+        <h2 class="text-3xl font-black text-[#0f172a] uppercase tracking-tighter">Métricas de Producción</h2>
+        <p class="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-1">Análisis de saturación y backlog</p>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-4 space-y-10">
+        <!-- Tiempo por Máquina -->
+        <section>
+          <h3 class="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#0f172a] mb-5">
+            <span class="p-2 bg-indigo-50 text-indigo-500 rounded-xl leading-none">⏱️</span>
+            Workload por Máquina (Horas)
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${metrics.machines.length > 0 ? metrics.machines.map(m => `
+              <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:scale-[1.02] transition-all">
+                <div class="flex flex-col">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-widest">ID #${m.machine_id}</span>
+                  <span class="text-sm font-black text-[#0f172a] max-w-[120px] truncate">${m.machine_name}</span>
+                </div>
+                <div class="flex items-end gap-1">
+                  <span class="text-2xl font-black text-indigo-600">${m.queued_hours.toFixed(1)}</span><span class="text-xs text-indigo-400 font-bold mb-1">h</span>
+                </div>
+              </div>
+            `).join('') : '<p class="text-slate-400 text-xs font-bold w-full col-span-full">No hay máquinas asignadas a la cola.</p>'}
+          </div>
+        </section>
+
+        <!-- Consumo por Material -->
+        <section>
+          <h3 class="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#0f172a] mb-5">
+            <span class="p-2 bg-emerald-50 text-emerald-500 rounded-xl leading-none">⚖️</span>
+            Consumo Estimado (Kg / L)
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${metrics.materials.length > 0 ? metrics.materials.map(mat => {
+              const isResin = mat.material_name.toLowerCase().includes('resina') || mat.material_type.toLowerCase().includes('sla');
+              const unit = isResin ? 'L' : 'kg';
+              const color = isResin ? 'text-teal-600' : 'text-emerald-600';
+              const bgBadge = isResin ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700';
+
+              return `
+              <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:scale-[1.02] transition-all">
+                <div class="flex flex-col gap-1 items-start">
+                  <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${bgBadge}">${mat.material_type}</span>
+                  <span class="text-sm font-black text-[#0f172a]">${mat.material_name}</span>
+                </div>
+                <div class="flex items-end gap-1">
+                  <span class="text-2xl font-black ${color}">${mat.queued_kilos.toFixed(2)}</span><span class="text-xs ${color} opacity-60 font-bold mb-1">${unit}</span>
+                </div>
+              </div>`
+            }).join('') : '<p class="text-slate-400 text-xs font-bold w-full col-span-full">No hay materiales requeridos en la cola actual.</p>'}
+          </div>
+        </section>
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('#close-metrics-btn')?.addEventListener('click', () => {
+    modal.remove();
   });
 };
