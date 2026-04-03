@@ -325,7 +325,7 @@ export const openNewOrderModal = async () => {
                 <input type="text" placeholder="Nombre STL / Pieza" class="item-name flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-blue-300" required>
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
               </div>
-              <div class="grid grid-cols-5 gap-2">
+              <div class="grid grid-cols-6 gap-2">
                 <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                   <div class="relative">
@@ -338,8 +338,12 @@ export const openNewOrderModal = async () => {
                   <input type="number" step="0.1" min="0" placeholder="0" class="item-weight w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
-                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo (min)</label>
-                  <input type="number" min="0" placeholder="0" class="item-time w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Horas</label>
+                  <input type="number" min="0" placeholder="0" class="item-time-hours w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                </div>
+                <div>
+                  <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Minutos</label>
+                  <input type="number" min="0" max="59" placeholder="0" class="item-time-mins w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
                   <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
