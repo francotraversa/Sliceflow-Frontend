@@ -183,8 +183,8 @@ export const openUpdateProductionModal = async (
         ? (Number(hoursInput?.value || 0) * 60) + Number(minsInput?.value || 0)
         : null;
 
-      const finalTime = computedTime !== null 
-        ? computedTime 
+      const finalTime = computedTime !== null
+        ? computedTime
         : Number(input.dataset.oldTime || 0);
 
       return {
@@ -292,25 +292,6 @@ export const openNewOrderModal = async () => {
           <div>
             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Mins Est.</label>
             <input type="number" id="global-mins-input" name="estimated_minutes_form" value="0" min="0" max="59" readonly class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-not-allowed">
-          </div>
-        </div>
-
-        <div class="bg-slate-50/60 rounded-[20px] border border-slate-100 p-4">
-          <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-3">⚙️ Material y Máquina por defecto <span class="font-normal normal-case text-slate-300">(se aplica a todas las piezas sin asignación propia)</span></p>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="relative">
-              <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1.5">Material por defecto</label>
-              <input type="text" id="mat-search" placeholder="Buscar material..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none">
-              <input type="hidden" name="material_id" id="mat-id-hidden">
-              <div id="mat-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-100 shadow-xl rounded-xl max-h-36 overflow-y-auto z-50 p-1.5 custom-scrollbar"></div>
-            </div>
-            <div>
-              <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1.5">Máquina por defecto</label>
-              <select id="default-machine-id" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none cursor-pointer">
-                <option value="">Sin asignar</option>
-                ${machines.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('')}
-              </select>
-            </div>
           </div>
         </div>
 
@@ -461,7 +442,7 @@ export const openNewOrderModal = async () => {
 
   // Filas Dinámicas
   const container = modal.querySelector('#items-container')!;
-  
+
   // Función para actualizar los totales de tiempo
   const updateGlobalTime = () => {
     let totalMinutes = 0;
@@ -475,7 +456,7 @@ export const openNewOrderModal = async () => {
 
     const hInput = modal.querySelector('#global-hours-input') as HTMLInputElement;
     const mInput = modal.querySelector('#global-mins-input') as HTMLInputElement;
-    
+
     if (hInput && mInput) {
       hInput.value = Math.floor(totalMinutes / 60).toString();
       mInput.value = (totalMinutes % 60).toString();
@@ -524,11 +505,11 @@ export const openNewOrderModal = async () => {
       const itemMacVal = (row.querySelector('.item-machine-id') as HTMLSelectElement)?.value;
       const itemPrice = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
       const itemWeight = (row.querySelector('.item-weight') as HTMLInputElement)?.value;
-      
+
       const itemHours = (row.querySelector('.item-time-hours') as HTMLInputElement)?.value;
       const itemMins = (row.querySelector('.item-time-mins') as HTMLInputElement)?.value;
       let itemTime: number | undefined = undefined;
-      
+
       if ((itemHours && itemHours !== "") || (itemMins && itemMins !== "")) {
         itemTime = (Number(itemHours || 0) * 60) + Number(itemMins || 0);
       }
@@ -973,12 +954,12 @@ export const openMetricsModal = (metrics: MetricsResponse) => {
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${metrics.materials.length > 0 ? metrics.materials.map(mat => {
-              const isResin = mat.material_name.toLowerCase().includes('resina') || mat.material_type.toLowerCase().includes('sla');
-              const unit = isResin ? 'L' : 'kg';
-              const color = isResin ? 'text-teal-600' : 'text-emerald-600';
-              const bgBadge = isResin ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700';
+    const isResin = mat.material_name.toLowerCase().includes('resina') || mat.material_type.toLowerCase().includes('sla');
+    const unit = isResin ? 'L' : 'kg';
+    const color = isResin ? 'text-teal-600' : 'text-emerald-600';
+    const bgBadge = isResin ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700';
 
-              return `
+    return `
               <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:scale-[1.02] transition-all">
                 <div class="flex flex-col gap-1 items-start">
                   <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${bgBadge}">${mat.material_type}</span>
@@ -988,7 +969,7 @@ export const openMetricsModal = (metrics: MetricsResponse) => {
                   <span class="text-2xl font-black ${color}">${mat.queued_kilos.toFixed(2)}</span><span class="text-xs ${color} opacity-60 font-bold mb-1">${unit}</span>
                 </div>
               </div>`
-            }).join('') : '<p class="text-slate-400 text-xs font-bold w-full col-span-full">No hay materiales requeridos en la cola actual.</p>'}
+  }).join('') : '<p class="text-slate-400 text-xs font-bold w-full col-span-full">No hay materiales requeridos en la cola actual.</p>'}
           </div>
         </section>
       </div>
