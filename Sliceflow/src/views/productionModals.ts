@@ -364,34 +364,7 @@ export const openNewOrderModal = async () => {
 
   document.body.appendChild(modal);
 
-  // Búsqueda de Materiales
-  const matInput = modal.querySelector('#mat-search') as HTMLInputElement;
-  const matResults = modal.querySelector('#mat-results') as HTMLDivElement;
-  const matHidden = modal.querySelector('#mat-id-hidden') as HTMLInputElement;
-
-  matInput.addEventListener('input', (e) => {
-    const val = (e.target as HTMLInputElement).value.toLowerCase();
-    if (!val) { matResults.classList.add('hidden'); return; }
-    const matches = materials.filter((m: any) => m.name.toLowerCase().includes(val));
-    if (matches.length > 0) {
-      matResults.classList.remove('hidden');
-      matResults.innerHTML = matches.map((m: any) => `
-                <div class="mat-opt p-3 hover:bg-blue-50 cursor-pointer rounded-xl font-bold text-xs text-[#0f172a] flex justify-between" data-id="${m.id}" data-name="${m.name}">
-                    <span>${m.name}</span>
-                    <span class="text-[9px] text-blue-300 font-black">ID: ${m.id}</span>
-                </div>
-            `).join('');
-
-      matResults.querySelectorAll('.mat-opt').forEach(opt => {
-        opt.addEventListener('click', (e) => {
-          const t = e.currentTarget as HTMLElement;
-          matInput.value = t.dataset.name!;
-          matHidden.value = t.dataset.id!;
-          matResults.classList.add('hidden');
-        });
-      });
-    }
-  });
+  // (Se eliminó la búsqueda de material global a pedido del usuario)
 
   const buildItemRowHTML = (mats: any[], macs: any[]) => {
     const matOptions = mats.map((m: any) => `<option value="${m.id}">${m.name} (${m.type})</option>`).join('');
@@ -486,19 +459,16 @@ export const openNewOrderModal = async () => {
     e.preventDefault();
     const btn = modal.querySelector('#btn-submit-new') as HTMLButtonElement;
 
-    // material_id is optional when every item has its own
+    // Como ya no hay material global, exigimos que cara pieza tenga material.
     const allItemsHaveMaterial = Array.from(modal.querySelectorAll('.item-material-id')).every((s: any) => s.value !== '');
-    if (!matHidden.value && !allItemsHaveMaterial) {
-      alert("Seleccioná un material por defecto, o asignale uno a cada pieza.");
+    if (!allItemsHaveMaterial) {
+      alert("Debés asignarle un material a cada pieza (no configuraste uno global).");
       return;
     }
 
     btn.disabled = true; btn.innerText = 'PROCESANDO...';
 
     const fd = new FormData(form);
-    const defaultMaterialId = matHidden.value ? Number(matHidden.value) : undefined;
-    const defaultMachineId = (modal.querySelector('#default-machine-id') as HTMLSelectElement).value;
-    const defaultMacNum = defaultMachineId ? Number(defaultMachineId) : undefined;
 
     const items: CreateOrderItemDTO[] = Array.from(modal.querySelectorAll('.item-row')).map((row: any) => {
       const itemMatVal = (row.querySelector('.item-material-id') as HTMLSelectElement)?.value;
@@ -521,9 +491,9 @@ export const openNewOrderModal = async () => {
         price: Number(itemPrice),
         weight: itemWeight ? Number(itemWeight) : undefined,
         time: itemTime,
-        // fall back to order-level default if no item-specific value
-        material_id: itemMatVal ? Number(itemMatVal) : defaultMaterialId,
-        machine_id: itemMacVal ? Number(itemMacVal) : defaultMacNum,
+        // Sin fallbacks globales porque el input fue eliminado en la UI
+        material_id: itemMatVal ? Number(itemMatVal) : undefined,
+        machine_id: itemMacVal ? Number(itemMacVal) : undefined,
       };
     });
 
