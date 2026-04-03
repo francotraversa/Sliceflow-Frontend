@@ -65,7 +65,7 @@ export const openUpdateProductionModal = async (
                            min="0" max="${item.quantity}">
                   </div>
                 </div>
-                <div class="grid grid-cols-5 gap-2">
+                <div class="grid grid-cols-6 gap-2">
                   <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                     <div class="relative">
@@ -82,10 +82,16 @@ export const openUpdateProductionModal = async (
                            value="${item.weight ?? ''}">
                   </div>
                   <div>
-                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo</label>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Horas</label>
                     <input type="number" min="0" placeholder="0"
-                           class="item-time-input w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
-                           value="${item.time ?? ''}">
+                           class="item-hours-input w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
+                           value="${item.time ? Math.floor(item.time / 60) : ''}">
+                  </div>
+                  <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Min.</label>
+                    <input type="number" min="0" max="59" placeholder="0"
+                           class="item-mins-input w-full bg-white border border-slate-100 rounded-xl px-2 py-1.5 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300"
+                           value="${item.time ? item.time % 60 : ''}">
                   </div>
                   <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material</label>
@@ -162,7 +168,8 @@ export const openUpdateProductionModal = async (
 
       // Capturamos los inputs
       const weightInput = row?.querySelector('.item-weight-input') as HTMLInputElement | null;
-      const timeInput = row?.querySelector('.item-time-input') as HTMLInputElement | null;
+      const hoursInput = row?.querySelector('.item-hours-input') as HTMLInputElement | null;
+      const minsInput = row?.querySelector('.item-mins-input') as HTMLInputElement | null;
 
       // REGLA DE RECUPERACIÓN: 
       // 1. Si el input tiene un valor escrito por el usuario, usamos ese.
@@ -172,8 +179,12 @@ export const openUpdateProductionModal = async (
         ? Number(weightInput?.value)
         : Number(input.dataset.oldWeight || 0);
 
-      const finalTime = timeInput?.value !== ""
-        ? Number(timeInput?.value)
+      const computedTime = (hoursInput?.value && hoursInput.value !== "" || minsInput?.value && minsInput.value !== "")
+        ? (Number(hoursInput?.value || 0) * 60) + Number(minsInput?.value || 0)
+        : null;
+
+      const finalTime = computedTime !== null 
+        ? computedTime 
         : Number(input.dataset.oldTime || 0);
 
       return {
@@ -406,7 +417,7 @@ export const openNewOrderModal = async () => {
                 <input type="number" placeholder="Cant." class="item-qty w-20 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none text-center focus:border-blue-300" required min="1">
                 <button type="button" class="remove-row text-slate-300 hover:text-red-500 font-black text-lg leading-none px-1 flex-shrink-0">✕</button>
             </div>
-            <div class="grid grid-cols-5 gap-2">
+            <div class="grid grid-cols-6 gap-2">
                 <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Precio ($)</label>
                     <div class="relative">
@@ -419,8 +430,12 @@ export const openNewOrderModal = async () => {
                     <input type="number" step="0.1" min="0" placeholder="0" class="item-weight w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
-                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Tiempo (min)</label>
-                    <input type="number" min="0" placeholder="0" class="item-time w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Horas</label>
+                    <input type="number" min="0" placeholder="0" class="item-time-hours w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
+                </div>
+                <div>
+                    <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Minutos</label>
+                    <input type="number" min="0" max="59" placeholder="0" class="item-time-mins w-full bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:border-blue-300">
                 </div>
                 <div>
                     <label class="text-[8px] font-black uppercase text-slate-300 tracking-widest block mb-1">Material específico</label>
@@ -448,7 +463,9 @@ export const openNewOrderModal = async () => {
     let totalMinutes = 0;
     container.querySelectorAll('.item-row').forEach(row => {
       const qty = Number((row.querySelector('.item-qty') as HTMLInputElement).value || 0);
-      const time = Number((row.querySelector('.item-time') as HTMLInputElement).value || 0);
+      const hours = Number((row.querySelector('.item-time-hours') as HTMLInputElement).value || 0);
+      const mins = Number((row.querySelector('.item-time-mins') as HTMLInputElement).value || 0);
+      const time = (hours * 60) + mins;
       totalMinutes += (qty * time);
     });
 
@@ -463,7 +480,7 @@ export const openNewOrderModal = async () => {
 
   container.addEventListener('input', (e) => {
     const target = e.target as HTMLElement;
-    if (target.classList.contains('item-time') || target.classList.contains('item-qty')) {
+    if (target.classList.contains('item-time-hours') || target.classList.contains('item-time-mins') || target.classList.contains('item-qty')) {
       updateGlobalTime();
     }
   });
@@ -503,14 +520,22 @@ export const openNewOrderModal = async () => {
       const itemMacVal = (row.querySelector('.item-machine-id') as HTMLSelectElement)?.value;
       const itemPrice = (row.querySelector('.item-price') as HTMLInputElement)?.value ?? '0';
       const itemWeight = (row.querySelector('.item-weight') as HTMLInputElement)?.value;
-      const itemTime = (row.querySelector('.item-time') as HTMLInputElement)?.value;
+      
+      const itemHours = (row.querySelector('.item-time-hours') as HTMLInputElement)?.value;
+      const itemMins = (row.querySelector('.item-time-mins') as HTMLInputElement)?.value;
+      let itemTime: number | undefined = undefined;
+      
+      if ((itemHours && itemHours !== "") || (itemMins && itemMins !== "")) {
+        itemTime = (Number(itemHours || 0) * 60) + Number(itemMins || 0);
+      }
+
       return {
         stl_name: row.querySelector('.item-name').value,
         quantity: Number(row.querySelector('.item-qty').value),
         done_pieces: 0,
         price: Number(itemPrice),
         weight: itemWeight ? Number(itemWeight) : undefined,
-        time: itemTime ? Number(itemTime) : undefined,
+        time: itemTime,
         // fall back to order-level default if no item-specific value
         material_id: itemMatVal ? Number(itemMatVal) : defaultMaterialId,
         machine_id: itemMacVal ? Number(itemMacVal) : defaultMacNum,

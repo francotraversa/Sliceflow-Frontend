@@ -22,7 +22,7 @@ export const openMachineModal = (app: HTMLDivElement, machine?: any) => {
             <label class="text-[10px] font-black uppercase text-slate-400 mb-2 ml-1 block">Tipo</label>
             <select name="type" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none">
               <option value="FDM" ${machine?.type === 'FDM' ? 'selected' : ''}>FDM</option>
-              <option value="SLS" ${machine?.type === 'SLS' ? 'selected' : ''}>SLS</option>
+              <option value="SLA" ${machine?.type === 'SLA' ? 'selected' : ''}>SLA</option>
             </select>
           </div>
 

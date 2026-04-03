@@ -10,6 +10,6 @@ export interface Material {
 export interface Machine {
   id: number;
   name: string;
-  type: 'FDM' | 'SLS';
+  type: 'FDM' | 'SLA';
   status: 'idle' | 'printing' | 'maintenance';
 }
